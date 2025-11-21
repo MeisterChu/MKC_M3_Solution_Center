@@ -1,0 +1,1805 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>설비 목록 - 설비관리대장</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="assets/styles.css" />
+    <script type="module" src="./assets/auth-guard.js"></script>
+    <style>
+      body {
+        /* 좌측 여백 제거 + 상하 여백 제거로 세로 전체 채움 */
+        padding: 0 20px 0 0;
+        background: #f5f5f5;
+      }
+      .list-container {
+        max-width: 1;
+        /* 가운데 정렬 해제하여 좌측 정렬 */
+        margin: 0;
+      }
+      .list-layout {
+        display: grid;
+        grid-template-columns: 410px minmax(0, 1fr);
+        gap: 24px;
+        align-items: flex-start;
+        /* 헤더 영역 제외하여 리스트 영역 높이 계산 */
+        min-height: calc(100vh - 60px);
+      }
+      .list-sidebar {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        /* 상단바 아래 고정, 가시높이 전부 사용 */
+        position: sticky;
+        top: 60px;
+        height: calc(100vh - 60px);
+        overflow: auto;
+      }
+      .list-content {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        padding: 24px;
+        min-height: 400px;
+      }
+      .sidebar-section {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .list-header {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid #e0e0e0;
+      }
+      .list-header-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        width: 100%;
+        justify-content: flex-end;
+      }
+      .list-header-actions button {
+        min-width: 120px;
+      }
+      .list-header h1 {
+        margin: 0;
+        font-size: 26px;
+        color: #333;
+      }
+      .refresh-btn {
+        padding: 8px 16px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      .refresh-btn:hover {
+        background: #0056b3;
+      }
+      .search-box {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      
+      .category-filter {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+        flex-shrink: 0;
+      }
+      .category-filter-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .category-filter-buttons button {
+        padding: 10px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        background: #f8fafc;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all .15s ease;
+      }
+      .category-filter-buttons button:hover {
+        border-color: #0D47A1; /* 짙은 파랑 */
+        color: #0D47A1;
+      }
+      .category-filter-buttons button.active {
+        background: #0D47A1; /* 짙은 파랑 */
+        border-color: #0D47A1;
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(13,71,161,0.25);
+      }
+      .category-filter-buttons .category-filter-btn[data-category="all"] {
+        grid-column: 1 / -1; /* 전체 버튼은 한 줄 차지 */
+      }
+      .search-box input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+      }
+      .equipment-list {
+        display: grid;
+        gap: 12px;
+      }
+      .equipment-item {
+        display: grid;
+        grid-template-columns: 80px 1fr;
+        gap: 12px;
+        padding: 12px 15px;
+        padding-right: 50px; /* 구분 라벨 공간 확보 */
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: white;
+        position: relative;
+        overflow: hidden;
+        align-items: stretch;
+      }
+      .equipment-thumbnail {
+        width: 70px;
+        height: 90px;
+        border-radius: 6px;
+        object-fit: cover;
+        object-position: center;
+        border: 1px solid #e0e0e0;
+        background: #f5f5f5;
+        cursor: default;
+        flex-shrink: 0;
+      }
+      /* 썸네일 확대 기능 제거에 따라 hover 효과 비활성화 */
+      .equipment-thumbnail-placeholder {
+        width: 70px;
+        height: 90px;
+        border-radius: 6px;
+        border: 1px solid #e0e0e0;
+        background: #f5f5f5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #999;
+        font-size: 13px;
+        flex-shrink: 0;
+      }
+      .equipment-item:hover {
+        border-color: #007bff;
+        box-shadow: 0 2px 8px rgba(0,123,255,0.2);
+        transform: translateY(-2px);
+      }
+      .equipment-info {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .info-item.model-item .info-value {
+        font-size: 20px;
+      }
+      .info-value {
+        font-size: 18px;
+        font-weight: 600;
+        color: #222;
+      }
+      .info-headline {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 15px;
+      }
+      .info-headline .model-wrapper {
+        flex: 1;
+        min-width: 0;
+      }
+      .equipment-status {
+        display: inline-flex;
+        align-items: flex-start;
+        justify-content: flex-end;
+        flex-shrink: 0;
+        text-align: right;
+      }
+      .info-inline-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 4px 12px;
+      }
+      .info-inline {
+        display: flex;
+        align-items: center;
+        font-size: 14px;
+        color: #333;
+        gap: 2px;
+        line-height: 1.4;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .info-inline-label {
+        color: #666;
+        font-weight: 500;
+        font-size: 13px;
+      }
+      .info-inline-label::after {
+        content: ' : ';
+        color: #b0b0b0;
+        margin-left: 2px;
+        margin-right: 2px;
+      }
+      .info-inline-value {
+        font-size: 14px;
+        font-weight: 600;
+        color: #222;
+      }
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+      }
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #999;
+      }
+      .empty-state h2 {
+        margin: 0 0 10px 0;
+        color: #666;
+      }
+      .stats {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 8px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        justify-content: space-between;
+        align-items: flex-end;
+      }
+      .stat-item {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 60px;
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+      .stat-label {
+        font-size: 12px;
+        color: #666;
+      }
+      .stat-value {
+        font-size: 22px;
+        font-weight: bold;
+        color: #007bff;
+      }
+      .view-filter {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .view-filter-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #444;
+      }
+      .view-filter-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .view-filter-buttons button {
+        padding: 10px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        background: #f8fafc;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all .15s ease;
+      }
+      .view-filter-buttons button:hover {
+        border-color: #0d6efd;
+        color: #0d6efd;
+      }
+      .view-filter-buttons button.active {
+        background: #0d6efd;
+        border-color: #0d6efd;
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(13,110,253,0.25);
+      }
+      .view-filter-buttons button[data-view="issue"] {
+        grid-column: 1 / -1;
+      }
+      .info-inline-value.calibration-elapsed {
+        font-size: 16px;
+        font-weight: 700;
+        color: #b91c1c;
+      }
+      @media (max-width: 1100px) {
+        .list-layout {
+          grid-template-columns: 1fr;
+        }
+        .list-sidebar {
+          position: static;
+          height: auto; /* 모바일/좁은 화면에서는 자동 높이 */
+          overflow: visible;
+        }
+        .list-header-actions {
+          justify-content: flex-start;
+        }
+      }
+      /* Category badge styles */
+      .category-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 10px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #fff;
+        line-height: 1.2;
+        letter-spacing: 0.3px;
+        text-transform: uppercase;
+        background: #6c757d; /* default gray */
+      }
+      .category-badge.cmm { background: #0D47A1; }      /* 짙은 파랑 */
+      .category-badge.vmm { background: #037c62; }      /* 바다색 */
+      .category-badge.form { background: #8B4513; }     /* 갈색 */
+      .category-badge.others { background: #6c757d; }   /* 회색 */
+      /* Category index label (diary style) */
+      .category-index-label {
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 700;
+        color: #fff;
+        letter-spacing: 2px;
+        z-index: 1;
+        border-radius: 0 6px 6px 0;
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+      }
+      .category-index-label.cmm { background: #0D47A1; }
+      .category-index-label.vmm { background: #037c62; }
+      .category-index-label.form { background: #8B4513; }
+      .category-index-label.others { background: #6c757d; }
+      /* Status badge styles */
+      .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 700;
+        color: #fff;
+        line-height: 1.3;
+        letter-spacing: 0.2px;
+      }
+      .status-badge.normal { background: #27811e; }           /* 녹색 - 정상 */
+      .status-badge.partial_fault { background: #b48305; color: #fff; }  /* 짙은노랑 - 부분고장 */
+      .status-badge.unusable { background: #a72330; }         /* 빨강 - 사용불가 */
+      .status-badge.outbound { background: #007bff; }         /* 파랑 - 반출중 */
+      .status-badge.sold { background: #000000; }             /* 검정 - 판매됨 */
+    </style>
+  </head>
+  <body>
+    <header class="topbar" role="banner">
+      <div class="brand"><span class="brand-highlight" aria-label="M3 Solution Center 라벨">M3 Solution Center</span></div>
+      <div class="actions" role="toolbar" aria-label="상단 도구 모음"></div>
+    </header>
+    <div class="list-container">
+      <div class="list-layout">
+        <aside class="list-sidebar">
+
+          <div class="sidebar-section">
+            <div class="search-box">
+              <div class="category-filter">
+                <button class="refresh-btn" id="btnNewEquipment" type="button" style="background: #28a745;">신규 설비 등록</button>
+                <div class="category-filter-buttons" role="radiogroup" aria-label="구분 선택">
+                  <button type="button" class="category-filter-btn" data-category="all" aria-pressed="false">전체</button>
+                  <button type="button" class="category-filter-btn" data-category="CMM" aria-pressed="false">CMM</button>
+                  <button type="button" class="category-filter-btn" data-category="VMM" aria-pressed="false">VMM</button>
+                  <button type="button" class="category-filter-btn" data-category="FORM" aria-pressed="false">FORM</button>
+                  <button type="button" class="category-filter-btn" data-category="OTHERS" aria-pressed="false">OTHERS</button>
+                </div>
+              </div>
+              <input type="text" id="searchInput" placeholder="모델, 시리얼번호, 코드번호로 검색..." />
+            </div>
+          </div>
+
+          <div class="sidebar-section">
+            <div class="stats" id="stats" style="display: none;">
+              <div class="stat-item">
+                <div class="stat-label">전체</div>
+                <div class="stat-value" id="statTotal">0</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">CMM</div>
+                <div class="stat-value" id="statCMM">0</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">VMM</div>
+                <div class="stat-value" id="statVMM">0</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">FORM</div>
+                <div class="stat-value" id="statFORM">0</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">OTHERS</div>
+                <div class="stat-value" id="statOTHERS">0</div>
+              </div>
+            </div>
+            <div class="view-filter">
+              <div class="view-filter-label">보기 모드</div>
+              <div class="view-filter-buttons" role="radiogroup" aria-label="보기 모드 선택">
+                <button type="button" class="view-filter-btn active" data-view="default" aria-pressed="true">기본보기</button>
+                <button type="button" class="view-filter-btn" data-view="calibration" aria-pressed="false">정도검사</button>
+                <button type="button" class="view-filter-btn" data-view="issue" aria-pressed="false">ISSUE</button>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <div class="list-content">
+          <div id="loading" class="loading">데이터를 불러오는 중...</div>
+          <div id="equipmentList" class="equipment-list" style="display: none;"></div>
+          <div id="emptyState" class="empty-state" style="display: none;">
+            <h2>설비 데이터가 없습니다</h2>
+            <p>Firebase에 저장된 설비 데이터가 없습니다.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 신규 설비 등록 모달 -->
+    <div id="newEquipmentModal" class="modal">
+      <div class="modal-content-inner">
+        <h2>신규 설비 등록</h2>
+        <p>필수 정보를 입력해주세요.</p>
+        <div class="row-2">
+          <label class="required">
+            <span>Model <span style="color: red;">*</span></span>
+            <input type="text" id="newEquipmentModel" placeholder="모델명 입력" required />
+            <small id="errNewModel" class="error-text"></small>
+          </label>
+          <label class="required">
+            <span>최초설치일 <span style="color: red;">*</span></span>
+            <input type="date" id="newEquipmentInstallDate" required />
+            <small id="errNewInstall" class="error-text"></small>
+          </label>
+        </div>
+        <div class="row-2">
+          <label class="required">
+            <span>Serial No. <span style="color: red;">*</span></span>
+            <input type="text" id="newEquipmentSerial" placeholder="시리얼 번호 입력" required />
+            <small id="errNewSerial" class="error-text"></small>
+          </label>
+          <label class="required">
+            <span>Code No. <span style="color: red;">*</span></span>
+            <input type="text" id="newEquipmentCode" placeholder="코드 번호 입력" required />
+            <small id="errNewCode" class="error-text"></small>
+          </label>
+        </div>
+        <label class="required">
+          <span>구분 <span style="color: red;">*</span></span>
+          <div class="choice-group">
+            <label class="choice-option"><input type="radio" name="newEquipmentCategory" value="CMM" /><span>CMM</span></label>
+            <label class="choice-option"><input type="radio" name="newEquipmentCategory" value="VMM" /><span>VMM</span></label>
+            <label class="choice-option"><input type="radio" name="newEquipmentCategory" value="FORM" /><span>FORM</span></label>
+            <label class="choice-option"><input type="radio" name="newEquipmentCategory" value="OTHERS" /><span>OTHERS</span></label>
+          </div>
+          <small id="errNewCategory" class="error-text"></small>
+        </label>
+        <label class="required">
+          <span>위치 (지역) <span style="color: red;">*</span></span>
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div id="newLocationRegionGroup" class="region-group">
+              <label class="region-option">
+                <input type="radio" name="newLocationRegion" value="시흥" />
+                <span>시흥</span>
+              </label>
+              <label class="region-option">
+                <input type="radio" name="newLocationRegion" value="부산" />
+                <span>부산</span>
+              </label>
+              <label class="region-option">
+                <input type="radio" name="newLocationRegion" value="대구" />
+                <span>대구</span>
+              </label>
+              <label class="region-option">
+                <input type="radio" name="newLocationRegion" value="대전" />
+                <span>대전</span>
+              </label>
+            </div>
+            <div class="sub-label">상세위치</div>
+            <div class="location-subgrid">
+              <input type="text" id="newLocationMiddle" placeholder="중분류 (선택사항)" />
+              <input type="text" id="newLocationMinor" placeholder="소분류 (선택사항)" />
+            </div>
+          </div>
+          <small id="errNewLocation" class="error-text"></small>
+        </label>
+        <small id="newEquipmentError" class="error-text"></small>
+        <div class="modal-actions">
+          <button id="newEquipmentCancel">취소</button>
+          <button id="newEquipmentConfirm">등록</button>
+        </div>
+      </div>
+    </div>
+
+    
+
+    <style>
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+      }
+      .modal.show {
+        display: flex;
+      }
+      .modal-content-inner {
+        background: white;
+        padding: 24px;
+        border-radius: 8px;
+        max-width: 500px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      }
+      .modal-content-inner h2 {
+        margin: 0 0 16px 0;
+        font-size: 22px;
+        color: #333;
+      }
+      .modal-content-inner > p {
+        margin: 0 0 16px 0;
+        color: #666;
+        font-size: 16px;
+      }
+      .modal-content-inner label {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 16px;
+      }
+      .modal-content-inner label.required > span {
+        font-weight: 600;
+      }
+      .modal-content-inner label > span {
+        font-size: 16px;
+        font-weight: 500;
+        color: #333;
+      }
+      .modal-content-inner input[type="text"],
+      .modal-content-inner input[type="date"],
+      .modal-content-inner select {
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+        font-family: inherit;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+      .modal-content-inner input[type="text"]:focus,
+      .modal-content-inner input[type="date"]:focus,
+      .modal-content-inner select:focus {
+        outline: none;
+        border-color: #007bff;
+      }
+      .error-text {
+        color: #dc2626;
+        font-size: 14px;
+        margin-top: 4px;
+        display: none;
+      }
+      .error-text:not(:empty) {
+        display: block;
+      }
+      #newEquipmentError {
+        color: #dc2626;
+        font-size: 14px;
+        display: none;
+        margin-bottom: 16px;
+      }
+      #newEquipmentError:not(:empty) {
+        display: block;
+      }
+      .modal-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+      .modal-actions button {
+        padding: 8px 16px;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      /* New form layout */
+      .row-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      @media (max-width: 560px) {
+        .row-2 { grid-template-columns: 1fr; }
+      }
+      /* Region radio as square buttons */
+      .region-group, .choice-group { display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; }
+      @media (max-width: 640px) { .region-group, .choice-group { grid-template-columns: repeat(2, 1fr); } }
+      @media (max-width: 380px) { .region-group, .choice-group { grid-template-columns: 1fr; } }
+      .region-option, .choice-option { position: relative; width:100%; }
+      .region-option input, .choice-option input { position:absolute; opacity:0; width:1px; height:1px; pointer-events:none; }
+      .region-option span, .choice-option span {
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        background: #fff;
+        color: #333;
+        width: 100%;
+        text-align: center;
+        user-select: none;
+        transition: all .15s ease;
+        box-sizing: border-box;
+      }
+      .region-option span:hover, .choice-option span:hover { border-color: #0d6efd; }
+      .region-option input:checked + span, .choice-option input:checked + span {
+        background: #0d6efd;
+        border-color: #0d6efd;
+        color: #fff;
+      }
+      /* Middle/Minor evenly split */
+      .location-subgrid { display:grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      @media (max-width: 560px) { .location-subgrid { grid-template-columns: 1fr; } }
+      /* Prevent grid children overflow */
+      .row-2 > * { min-width: 0; }
+      .location-subgrid > * { min-width: 0; }
+      .sub-label { font-size: 13px; color:#666; margin-top: 2px; }
+      #newEquipmentCancel {
+        background: #6c757d;
+      }
+      #newEquipmentCancel:hover {
+        background: #5a6268;
+      }
+      #newEquipmentConfirm {
+        background: #28a745;
+      }
+      #newEquipmentConfirm:hover {
+        background: #218838;
+      }
+    </style>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+      import { getFirebaseApp } from './assets/firebase-config.js';
+      import { getFirestore, collection, getDocs, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-lite.js';
+      
+      // Firebase 초기화
+      const app = getFirebaseApp();
+      const db = getFirestore(app);
+
+      // CORS 오류 처리: Firestore SDK가 내부적으로 실시간 채널을 시도하지만,
+      // 실제로는 실시간 리스너를 사용하지 않으므로 기능에 영향 없음
+      // 브라우저 콘솔 오류는 무시해도 됨
+      window.addEventListener('error', (event) => {
+        if (event.message && event.message.includes('access control checks') && 
+            event.message.includes('firestore.googleapis.com')) {
+          event.preventDefault();
+          console.debug('Firestore 내부 채널 CORS 오류 무시 (기능에 영향 없음)');
+        }
+      }, true);
+
+      const CATEGORY_FILTER_STORAGE_KEY = 'equipment_category_filter';
+      let allEquipments = [];
+      let filteredEquipments = [];
+      let selectedCategory = (() => {
+        try {
+          const stored = localStorage.getItem(CATEGORY_FILTER_STORAGE_KEY);
+          if (stored) return stored;
+        } catch (_) {}
+        return 'CMM';
+      })();
+      let viewFilter = 'default';
+      const passwordMap = {
+        '1211': '추호범',
+        '1424': '임경윤',
+        '2312': '전재민'
+      };
+      let loginModalKeydownBound = false;
+      let passwordResolve = null;
+      let passwordReject = null;
+      let passwordPromise = null;
+      
+
+      // Firestore 문서 ID 변환 (serial 기반) - 하단 공용 함수 사용
+
+      function computeThumbFromEq(eq) {
+        let url = '';
+        let desc = '';
+        if (eq && Array.isArray(eq.photos) && eq.photos.length > 0) {
+          let photo = null;
+          if (eq.representativePhoto !== null && eq.representativePhoto !== undefined) {
+            photo = eq.photos[eq.representativePhoto] || null;
+          }
+          if (!photo) photo = eq.photos[0];
+          if (photo) {
+            if (typeof photo === 'object' && photo.url) { url = photo.url; desc = photo.desc || ''; }
+            else if (typeof photo === 'string') { url = photo; }
+          }
+        }
+        return { thumbUrl: url, thumbDesc: desc };
+      }
+
+      async function enrichMetaWithEquipments() {
+        const equipmentsCol = collection(db, 'equipments');
+        let changed = false;
+        for (let i = 0; i < allEquipments.length; i++) {
+          const m = allEquipments[i];
+          // 보강이 필요한 경우에만 조회
+          const needs = !(m && (m.model || m.codeNo || m.category || m.installDate || m.calibrationDate || m.location || m.status));
+          if (!needs) continue;
+          const docId = sanitizeForDocId(m.serialNo || '');
+          if (!docId) continue;
+          try {
+            const snap = await getDoc(doc(equipmentsCol, docId));
+            if (snap.exists()) {
+              const eq = snap.data();
+              m.id = m.id || eq.id || m.internalId;
+              m.model = m.model || eq.model || '';
+              m.codeNo = m.codeNo || eq.codeNo || '';
+              m.category = m.category || eq.category || '';
+              m.installDate = m.installDate || eq.installDate || '';
+              m.calibrationDate = m.calibrationDate || eq.calibrationDate || '';
+              m.location = m.location || eq.location || '';
+              m.status = m.status || eq.status || '';
+              if (!m.thumbUrl) {
+                const t = computeThumbFromEq(eq);
+                m.thumbUrl = t.thumbUrl;
+                m.thumbDesc = t.thumbDesc;
+              }
+              // 메타도 갱신 (다음 로드 가벼움 유지)
+              try {
+                const metaRef = doc(collection(db, 'equipment_meta'), docId);
+                await setDoc(metaRef, {
+                  id: m.id,
+                  internalId: m.id,
+                  serialNo: m.serialNo || eq.serialNo || '',
+                  model: m.model || '',
+                  codeNo: m.codeNo || '',
+                  category: m.category || '',
+                  installDate: m.installDate || '',
+                  calibrationDate: m.calibrationDate || '',
+                  location: m.location || '',
+                  status: m.status || '',
+                  photoCode: eq.photoCode || m.photoCode || '',
+                  thumbUrl: m.thumbUrl || '',
+                  thumbDesc: m.thumbDesc || '',
+                  updatedAt: new Date().toISOString()
+                });
+              } catch(_) {}
+              changed = true;
+            }
+          } catch (e) {
+            console.warn('메타 보강 실패:', e);
+          }
+        }
+        if (changed) {
+          try { localStorage.setItem('equipment_meta_cache_v1', JSON.stringify(allEquipments)); } catch(_) {}
+        }
+      }
+
+      // 설비 목록 정렬 함수 (구분 기준: CMM, VMM, FORM, OTHERS 순, 같은 구분 내에서는 시리얼 번호로 정렬)
+      function sortEquipments(equipments) {
+        const categoryOrder = { 'CMM': 1, 'VMM': 2, 'FORM': 3, 'OTHERS': 4 };
+        return [...equipments].sort((a, b) => {
+          const categoryA = (a.category || '').toUpperCase();
+          const categoryB = (b.category || '').toUpperCase();
+          const orderA = categoryOrder[categoryA] || 999;
+          const orderB = categoryOrder[categoryB] || 999;
+          
+          // 1순위: 구분
+          if (orderA !== orderB) {
+            return orderA - orderB;
+          }
+          
+          // 2순위: 모델명
+          const modelA = (a.model || '').toUpperCase();
+          const modelB = (b.model || '').toUpperCase();
+          const modelCompare = modelA.localeCompare(modelB);
+          if (modelCompare !== 0) {
+            return modelCompare;
+          }
+
+          // 3순위: 시리얼 번호
+          const serialA = (a.serialNo || '').toUpperCase();
+          const serialB = (b.serialNo || '').toUpperCase();
+          return serialA.localeCompare(serialB);
+        });
+      }
+
+      function calcMonthsSince(dateStr) {
+        if (!dateStr) return null;
+        const base = new Date(dateStr);
+        if (isNaN(base.getTime())) return null;
+        const now = new Date();
+        let months = (now.getFullYear() - base.getFullYear()) * 12 + (now.getMonth() - base.getMonth());
+        if (now.getDate() < base.getDate()) months -= 1;
+        if (months < 0) months = 0;
+        return {
+          years: Math.floor(months / 12),
+          months: months % 12,
+          totalMonths: months,
+        };
+      }
+
+      function isCalibrationOverdue(eq) {
+        const diff = calcMonthsSince(eq?.calibrationDate || '');
+        if (!diff) return false;
+        return diff.totalMonths >= 12;
+      }
+
+      function compareCalibrationAge(a, b) {
+        const diffA = calcMonthsSince(a?.calibrationDate || '');
+        const diffB = calcMonthsSince(b?.calibrationDate || '');
+        const monthsA = diffA ? diffA.totalMonths : -1;
+        const monthsB = diffB ? diffB.totalMonths : -1;
+        return monthsB - monthsA;
+      }
+
+      // 인증 상태 대기 함수
+      async function waitForAuth() {
+        // 이미 인증된 경우 즉시 반환
+        if (window.currentUser) {
+          return;
+        }
+        // auth-state-changed 이벤트를 기다림
+        return new Promise((resolve) => {
+          // 최대 5초 대기
+          const timeout = setTimeout(() => {
+            resolve(); // 타임아웃 시에도 진행 (캐시 데이터 사용)
+          }, 5000);
+          
+          const handler = () => {
+            clearTimeout(timeout);
+            window.removeEventListener('auth-state-changed', handler);
+            resolve();
+          };
+          window.addEventListener('auth-state-changed', handler);
+          
+          // 이미 인증된 경우 즉시 해제
+          if (window.currentUser) {
+            clearTimeout(timeout);
+            window.removeEventListener('auth-state-changed', handler);
+            resolve();
+          }
+        });
+      }
+
+      // 설비 목록 로드
+      async function loadEquipments() {
+        const loadingEl = document.getElementById('loading');
+        const listEl = document.getElementById('equipmentList');
+        const emptyEl = document.getElementById('emptyState');
+        const statsEl = document.getElementById('stats');
+
+        try {
+          loadingEl.style.display = 'block';
+          listEl.style.display = 'none';
+          emptyEl.style.display = 'none';
+          statsEl.style.display = 'none';
+
+          // 캐시 우선 렌더링
+          try {
+            const cached = localStorage.getItem('equipment_meta_cache_v1');
+            if (cached) {
+              allEquipments = sortEquipments(JSON.parse(cached));
+              filteredEquipments = [...allEquipments];
+              updateStats();
+              const cachedQuery = document.getElementById('searchInput')?.value || '';
+              filterEquipments(cachedQuery);
+            }
+          } catch(_) {}
+
+          // 인증 상태 대기 (권한 오류 방지)
+          await waitForAuth();
+
+          // 가벼운 메타 컬렉션에서 최신 데이터 로드
+          const metaCol = collection(db, 'equipment_meta');
+          const snapshot = await getDocs(metaCol);
+
+          allEquipments = [];
+          snapshot.forEach(docSnap => {
+            const data = docSnap.data();
+            if (!data.id && data.internalId) data.id = data.internalId;
+            allEquipments.push(data);
+          });
+
+          // 구분 기준으로 정렬 (CMM, VMM, FORM, OTHERS 순), 같은 구분 내에서는 시리얼 번호로 정렬
+          allEquipments = sortEquipments(allEquipments);
+
+          // 메타 보강: 누락된 필드는 equipments에서 필요한 최소 필드만 조회해 채움
+          await enrichMetaWithEquipments();
+
+          // 메타 보강 후 정렬 재적용
+          allEquipments = sortEquipments(allEquipments);
+
+          filteredEquipments = [...allEquipments];
+          updateStats();
+          const initialQuery = document.getElementById('searchInput')?.value || '';
+          filterEquipments(initialQuery);
+
+          // 캐시 저장
+          try { localStorage.setItem('equipment_meta_cache_v1', JSON.stringify(allEquipments)); } catch(_) {}
+        } catch (error) {
+          console.error('설비 목록 로드 실패:', error);
+          // 권한 오류인 경우 캐시 데이터가 있으면 계속 사용
+          if (error.code === 'permission-denied' && allEquipments.length > 0) {
+            console.warn('Firestore 권한 오류 발생. 캐시 데이터를 사용합니다.');
+            loadingEl.style.display = 'none';
+            return; // 이미 캐시 데이터로 렌더링됨
+          }
+          // 다른 오류이거나 캐시가 없는 경우에만 에러 메시지 표시
+          if (allEquipments.length === 0) {
+            loadingEl.innerHTML = '<div style="color: red;">데이터를 불러오는 중 오류가 발생했습니다.</div>';
+          } else {
+            loadingEl.style.display = 'none';
+          }
+        }
+      }
+
+      // 통계 업데이트
+      function updateStats() {
+        const stats = {
+          total: allEquipments.length,
+          CMM: 0,
+          VMM: 0,
+          FORM: 0,
+          OTHERS: 0
+        };
+
+        allEquipments.forEach(eq => {
+          if (eq.category === 'CMM') stats.CMM++;
+          else if (eq.category === 'VMM') stats.VMM++;
+          else if (eq.category === 'FORM') stats.FORM++;
+          else if (eq.category === 'OTHERS') stats.OTHERS++;
+        });
+
+        document.getElementById('statTotal').textContent = stats.total;
+        document.getElementById('statCMM').textContent = stats.CMM;
+        document.getElementById('statVMM').textContent = stats.VMM;
+        document.getElementById('statFORM').textContent = stats.FORM;
+        document.getElementById('statOTHERS').textContent = stats.OTHERS;
+        document.getElementById('stats').style.display = 'flex';
+      }
+
+      // 목록 렌더링
+      function renderList() {
+        const loadingEl = document.getElementById('loading');
+        const listEl = document.getElementById('equipmentList');
+        const emptyEl = document.getElementById('emptyState');
+
+        loadingEl.style.display = 'none';
+
+        if (filteredEquipments.length === 0) {
+          listEl.style.display = 'none';
+          emptyEl.style.display = 'block';
+          return;
+        }
+
+        emptyEl.style.display = 'none';
+        listEl.style.display = 'grid';
+        listEl.innerHTML = '';
+
+        filteredEquipments.forEach(eq => {
+          const item = document.createElement('div');
+          item.className = 'equipment-item';
+          
+          const serialNo = eq.serialNo || '(시리얼 번호 없음)';
+          const model = eq.model || '-';
+          const codeNo = eq.codeNo || '-';
+          const category = eq.category || '-';
+          const installDate = eq.installDate || '-';
+          const calibrationDate = eq.calibrationDate || '-';
+          const location = eq.location || '-';
+          const status = eq.status || '';
+
+          // 상태 텍스트 매핑
+          const statusMap = {
+            'normal': '정상',
+            'partial_fault': '부분고장',
+            'unusable': '사용불가',
+            'outbound': '반출중',
+            'sold': '판매됨'
+          };
+          const statusText = status ? (statusMap[status] || status) : '';
+          const statusBadgeHtml = (status && status !== 'normal')
+            ? `<span class="status-badge ${status}">${escapeHtml(statusText)}</span>`
+            : '';
+
+          // 상세 정보 문자열 생성
+          const inlineItems = [
+            { label: '시리얼번호', value: serialNo },
+            { label: '코드번호', value: codeNo },
+            { label: '설치일', value: installDate },
+            (() => {
+              if (viewFilter === 'calibration') {
+                const diff = calcMonthsSince(eq.calibrationDate || '');
+                if (diff) {
+                  const elapsedText = `${diff.years}년 ${diff.months}개월 경과`;
+                  return { label: '정도검사일', value: `<span class="info-inline-value calibration-elapsed">${escapeHtml(elapsedText)}</span>`, isHtml: true };
+                }
+              }
+              return { label: '정도검사일', value: calibrationDate };
+            })(),
+            { label: '위치', value: location }
+          ];
+          const inlineHtml = inlineItems.map(({ label, value, isHtml }) => {
+            const valueMarkup = isHtml ? value : `<span class="info-inline-value">${escapeHtml(value)}</span>`;
+            return `<div class="info-inline"><span class="info-inline-label">${escapeHtml(label)}</span>${valueMarkup}</div>`;
+          }).join('');
+
+          // 대표사진 가져오기
+          const thumbnailUrl = eq.thumbUrl || null;
+          const thumbnailDesc = eq.thumbDesc || '';
+
+          const thumbnailHtml = thumbnailUrl 
+            ? `<img src="${escapeHtml(thumbnailUrl)}" alt="${escapeHtml(thumbnailDesc || '설비 사진')}" class="equipment-thumbnail" data-photo-url="${escapeHtml(thumbnailUrl)}" loading="lazy" />`
+            : '<div class="equipment-thumbnail-placeholder">사진 없음</div>';
+
+          // 구분 인덱스 라벨 생성
+          const categoryUpper = (eq.category || '').toUpperCase();
+          const categoryLower = (eq.category || '').toLowerCase();
+          const categoryIndexLabel = ['CMM','VMM','FORM','OTHERS'].includes(categoryUpper)
+            ? `<div class="category-index-label ${categoryLower}">${escapeHtml(categoryUpper)}</div>`
+            : '';
+
+          item.innerHTML = `
+            ${thumbnailHtml}
+            <div class="equipment-info">
+              <div class="info-headline">
+                <div class="info-item model-item model-wrapper">
+                  <div class="info-value">${escapeHtml(model)}</div>
+                </div>
+                <div class="equipment-status">${statusBadgeHtml}</div>
+              </div>
+              <div class="info-inline-list">
+                ${inlineHtml}
+              </div>
+            </div>
+            ${categoryIndexLabel}
+          `;
+
+          // 썸네일 클릭 시 확대 (아이템 클릭과 분리)
+          // 확대 보기 기능 제거: 썸네일 클릭 핸들러 미적용
+
+          item.addEventListener('click', () => {
+            openEquipment(eq.id);
+          });
+
+          listEl.appendChild(item);
+        });
+      }
+
+      // 설비 열기
+      function openEquipment(id) {
+        // index.html을 현재 페이지에서 열고 선택된 설비 ID 전달
+        // id가 없으면 문서 ID 사용
+        const equipmentId = id || '';
+        const url = `index.html?id=${encodeURIComponent(equipmentId)}`;
+        window.location.href = url;
+      }
+
+      // 사진 확대 모달 기능 제거
+
+      // 검색 필터
+      function filterEquipments(query) {
+        let filtered = [...allEquipments];
+        
+        // 카테고리 필터 적용
+        if (selectedCategory !== 'all') {
+          filtered = filtered.filter(eq => eq.category === selectedCategory);
+        }
+        
+        
+        // 검색어 필터 적용
+        if (query && query.trim()) {
+          const lowerQuery = query.toLowerCase();
+          filtered = filtered.filter(eq => {
+            const serialNo = (eq.serialNo || '').toLowerCase();
+            const model = (eq.model || '').toLowerCase();
+            const codeNo = (eq.codeNo || '').toLowerCase();
+            return serialNo.includes(lowerQuery) || 
+                   model.includes(lowerQuery) || 
+                   codeNo.includes(lowerQuery);
+          });
+        }
+
+        if (viewFilter === 'calibration') {
+          filtered = filtered.filter(eq => isCalibrationOverdue(eq));
+          filtered.sort(compareCalibrationAge);
+        } else if (viewFilter === 'issue') {
+          filtered = filtered.filter(eq => {
+            const status = (eq.status || '').toLowerCase();
+            return status && status !== 'normal';
+          });
+        }
+        
+        filteredEquipments = filtered;
+        renderList();
+      }
+
+      function syncCategoryRadios() {
+        // 버튼 기반으로 동기화 (기존 라디오 대체)
+        const buttons = document.querySelectorAll('.category-filter-btn');
+        if (!buttons || buttons.length === 0) return;
+        let matched = false;
+        buttons.forEach(btn => {
+          const cat = btn.dataset.category;
+          const isActive = cat === selectedCategory;
+          btn.classList.toggle('active', isActive);
+          btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+          if (isActive) matched = true;
+        });
+        if (!matched) {
+          selectedCategory = 'CMM';
+          buttons.forEach(btn => {
+            const isActive = btn.dataset.category === selectedCategory;
+            btn.classList.toggle('active', isActive);
+            btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+          });
+          try { localStorage.setItem(CATEGORY_FILTER_STORAGE_KEY, selectedCategory); } catch (_) {}
+        }
+      }
+
+      // HTML 이스케이프
+      function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // 시리얼 번호 기반 고유 ID 생성
+      function generateIdFromSerial(serialNo) {
+        if (!serialNo || !serialNo.trim()) return null;
+        return `SERIAL_${serialNo.trim().toUpperCase().replace(/\s+/g, '_')}`;
+      }
+
+      // Firestore 문서 ID용 시리얼 번호 변환
+      function sanitizeForDocId(serialNo) {
+        if (!serialNo || !serialNo.trim()) return null;
+        return serialNo.trim().replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_');
+      }
+
+      // ID 유틸
+      function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+
+      // 새 설비 생성 함수
+      function newEquipment(serialNo, model = "", codeNo = "", category = "", installDate = "", location = "") {
+        const id = generateIdFromSerial(serialNo);
+        return {
+          id: id,
+          model: model.trim(),
+          serialNo: serialNo.trim(),
+          codeNo: codeNo.trim(),
+          category: category,
+          installDate: installDate,
+          calibrationDate: installDate || "",
+          note: "",
+          manufacturer: "",
+          location: location.trim(),
+          status: "",
+          tags: [],
+          photos: [],
+          photoCode: "",
+          representativePhoto: null,
+          specs: [],
+          accessories: [],
+          history: [],
+          tasks: installDate ? [{ id: uid(), title: '정도검사', periodYear: 2, periodMonth: 0, periodDay: 0, lastCheck: installDate, nextCheck: '', note: '' }] : []
+        };
+      }
+
+      function ensureLoginModal() {
+        if (document.getElementById('loginModal')) return;
+        const modal = document.createElement('div');
+        modal.id = 'loginModal';
+        modal.className = 'modal';
+        modal.setAttribute('aria-hidden', 'true');
+        modal.innerHTML = `
+          <div class="modal-backdrop" data-close="1"></div>
+          <div class="modal-content" role="dialog" aria-modal="true" aria-label="비밀번호 확인">
+            <div class="form-grid" style="grid-template-columns: 1fr; width: min(90vw, 360px);">
+              <h2 style="margin:0;">비밀번호 확인</h2>
+              <p class="helper">신규 설비 등록을 위해 관리자 비밀번호를 입력해주세요.</p>
+              <label class="required full">
+                비밀번호
+                <input type="password" id="loginPasswordInput" autocomplete="off" />
+                <small id="loginPasswordError" class="error-text" aria-live="polite"></small>
+              </label>
+              <div class="form-actions">
+                <button id="loginPasswordCancel" class="btn-sm" type="button">취소</button>
+                <button id="loginPasswordConfirm" class="btn-sm btn-primary" type="button">확인</button>
+              </div>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+        modal.addEventListener('click', (e) => {
+          if (e.target.dataset.close === '1') {
+            closeLoginModal(true);
+          }
+        });
+        const cancel = document.getElementById('loginPasswordCancel');
+        const confirm = document.getElementById('loginPasswordConfirm');
+        const input = document.getElementById('loginPasswordInput');
+        const errorEl = document.getElementById('loginPasswordError');
+        cancel && cancel.addEventListener('click', () => closeLoginModal(true));
+        confirm && confirm.addEventListener('click', handleLoginConfirm);
+        if (input) {
+          input.addEventListener('input', () => {
+            if (errorEl) errorEl.textContent = '';
+          });
+        }
+        if (!loginModalKeydownBound) {
+          document.addEventListener('keydown', handleLoginModalKeydown);
+          loginModalKeydownBound = true;
+        }
+      }
+
+      function openLoginModal() {
+        ensureLoginModal();
+        const modal = document.getElementById('loginModal');
+        const input = document.getElementById('loginPasswordInput');
+        const errorEl = document.getElementById('loginPasswordError');
+        if (!modal || !input) return;
+        if (errorEl) errorEl.textContent = '';
+        input.value = '';
+        modal.setAttribute('aria-hidden', 'false');
+        modal.classList.add('show');
+        setTimeout(() => input.focus(), 60);
+      }
+
+      function closeLoginModal(cancelled = false) {
+        const modal = document.getElementById('loginModal');
+        const input = document.getElementById('loginPasswordInput');
+        if (!modal) return;
+        modal.setAttribute('aria-hidden', 'true');
+        modal.classList.remove('show');
+        if (input) {
+          input.value = '';
+          input.blur();
+        }
+        if (cancelled) {
+          if (passwordReject) {
+            passwordReject(new Error('PASSWORD_CANCELLED'));
+          }
+          passwordResolve = null;
+          passwordReject = null;
+          passwordPromise = null;
+        }
+      }
+
+      function handleLoginModalKeydown(e) {
+        const modal = document.getElementById('loginModal');
+        if (!modal || !modal.classList.contains('show')) return;
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          closeLoginModal(true);
+          return;
+        }
+        if (e.key === 'Enter') {
+          const active = document.activeElement;
+          if (active && active.id === 'loginPasswordInput') {
+            e.preventDefault();
+            handleLoginConfirm();
+          }
+        }
+      }
+
+      function handleLoginConfirm() {
+        const input = document.getElementById('loginPasswordInput');
+        const errorEl = document.getElementById('loginPasswordError');
+        if (!input || !errorEl) return;
+        const password = input.value.trim();
+        const user = passwordMap[password];
+        if (!user) {
+          errorEl.textContent = '올바른 비밀번호를 입력해주세요.';
+          input.focus();
+          input.select();
+          return;
+        }
+        closeLoginModal();
+        const resolve = passwordResolve;
+        passwordResolve = null;
+        passwordReject = null;
+        if (resolve) {
+          resolve(user);
+        }
+      }
+
+      function requestPassword() {
+        if (passwordPromise) {
+          return passwordPromise;
+        }
+        passwordPromise = new Promise((resolve, reject) => {
+          passwordResolve = (user) => {
+            passwordResolve = null;
+            passwordReject = null;
+            const finalResolve = resolve;
+            passwordPromise = null;
+            finalResolve(user);
+          };
+          passwordReject = (err) => {
+            passwordResolve = null;
+            passwordReject = null;
+            const finalReject = reject;
+            passwordPromise = null;
+            finalReject(err);
+          };
+          openLoginModal();
+        });
+        return passwordPromise;
+      }
+
+      // 모달 열기
+      function openNewEquipmentModal() {
+        const modal = document.getElementById('newEquipmentModal');
+        const modelInput = document.getElementById('newEquipmentModel');
+        const serialInput = document.getElementById('newEquipmentSerial');
+        const codeInput = document.getElementById('newEquipmentCode');
+        const categoryRadios = document.querySelectorAll('input[name="newEquipmentCategory"]');
+        const installDateInput = document.getElementById('newEquipmentInstallDate');
+        const regionRadios = document.querySelectorAll('input[name="newLocationRegion"]');
+        const middleInput = document.getElementById('newLocationMiddle');
+        const minorInput = document.getElementById('newLocationMinor');
+        const error = document.getElementById('newEquipmentError');
+        
+        // 모든 에러 메시지 초기화
+        const errorElements = document.querySelectorAll('.error-text');
+        errorElements.forEach(el => el.textContent = '');
+        
+        if (modal && serialInput) {
+          // 모든 입력 필드 초기화
+          if (modelInput) modelInput.value = '';
+          if (serialInput) serialInput.value = '';
+          if (codeInput) codeInput.value = '';
+          if (categoryRadios) categoryRadios.forEach(r => r.checked = false);
+          if (installDateInput) installDateInput.value = '';
+          if (regionRadios) regionRadios.forEach(r => r.checked = false);
+          if (middleInput) middleInput.value = '';
+          if (minorInput) minorInput.value = '';
+          if (error) {
+            error.textContent = '';
+          }
+          modal.classList.add('show');
+          setTimeout(() => {
+            if (modelInput) modelInput.focus();
+          }, 100);
+        } else {
+          console.error('모달 요소를 찾을 수 없습니다:', { modal, serialInput });
+        }
+      }
+
+      // 모달 닫기
+      function closeNewEquipmentModal() {
+        const modal = document.getElementById('newEquipmentModal');
+        const modelInput = document.getElementById('newEquipmentModel');
+        const serialInput = document.getElementById('newEquipmentSerial');
+        const codeInput = document.getElementById('newEquipmentCode');
+        const categoryRadios = document.querySelectorAll('input[name="newEquipmentCategory"]');
+        const installDateInput = document.getElementById('newEquipmentInstallDate');
+        const regionRadios = document.querySelectorAll('input[name="newLocationRegion"]');
+        const middleInput = document.getElementById('newLocationMiddle');
+        const minorInput = document.getElementById('newLocationMinor');
+        const error = document.getElementById('newEquipmentError');
+        
+        // 모든 에러 메시지 초기화
+        const errorElements = document.querySelectorAll('.error-text');
+        errorElements.forEach(el => el.textContent = '');
+        
+        if (modal) {
+          modal.classList.remove('show');
+        }
+        if (modelInput) modelInput.value = '';
+        if (serialInput) serialInput.value = '';
+        if (codeInput) codeInput.value = '';
+        if (categoryRadios) categoryRadios.forEach(r => r.checked = false);
+        if (installDateInput) installDateInput.value = '';
+        if (regionRadios) regionRadios.forEach(r => r.checked = false);
+        if (middleInput) middleInput.value = '';
+        if (minorInput) minorInput.value = '';
+        if (error) {
+          error.textContent = '';
+        }
+      }
+
+      // 새 설비 등록 처리
+      async function createNewEquipment() {
+        const modelInput = document.getElementById('newEquipmentModel');
+        const serialInput = document.getElementById('newEquipmentSerial');
+        const codeInput = document.getElementById('newEquipmentCode');
+        const categoryRadios = document.querySelectorAll('input[name="newEquipmentCategory"]');
+        const installDateInput = document.getElementById('newEquipmentInstallDate');
+        const regionRadios = document.querySelectorAll('input[name="newLocationRegion"]');
+        const middleInput = document.getElementById('newLocationMiddle');
+        const minorInput = document.getElementById('newLocationMinor');
+        const errLocation = document.getElementById('errNewLocation');
+        const error = document.getElementById('newEquipmentError');
+        
+        // 에러 요소들
+        const errModel = document.getElementById('errNewModel');
+        const errSerial = document.getElementById('errNewSerial');
+        const errCode = document.getElementById('errNewCode');
+        const errCategory = document.getElementById('errNewCategory');
+        const errInstall = document.getElementById('errNewInstall');
+        
+        if (!serialInput || !error) return;
+
+        // 모든 에러 메시지 초기화
+        if (errModel) errModel.textContent = '';
+        if (errSerial) errSerial.textContent = '';
+        if (errCode) errCode.textContent = '';
+        if (errCategory) errCategory.textContent = '';
+        if (errInstall) errInstall.textContent = '';
+        error.textContent = '';
+
+        // 필수 필드 값 가져오기
+        const model = modelInput ? modelInput.value.trim() : '';
+        const serialNo = serialInput.value.trim();
+        const codeNo = codeInput ? codeInput.value.trim() : '';
+        const selectedCategoryEl = Array.from(categoryRadios || []).find(r => r.checked);
+        const category = selectedCategoryEl ? selectedCategoryEl.value : '';
+        const installDate = installDateInput ? installDateInput.value : '';
+        // 위치 조립: 지역(필수)/중분류/소분류
+        const regionEl = Array.from(regionRadios || []).find(r => r.checked);
+        const region = regionEl ? regionEl.value : '';
+        const middle = middleInput ? middleInput.value.trim() : '';
+        const minor = minorInput ? minorInput.value.trim() : '';
+        const location = [region, middle, minor].filter((v, idx) => v && (idx === 0 || v !== '')).join('/');
+        
+        // 유효성 검사
+        let hasError = false;
+        
+        if (!model) {
+          if (errModel) errModel.textContent = '모델을 입력해주세요.';
+          if (modelInput) modelInput.focus();
+          hasError = true;
+        }
+        
+        if (!serialNo) {
+          if (errSerial) errSerial.textContent = '시리얼 번호를 입력해주세요.';
+          if (!hasError && serialInput) serialInput.focus();
+          hasError = true;
+        }
+        
+        if (!codeNo) {
+          if (errCode) errCode.textContent = '코드 번호를 입력해주세요.';
+          if (!hasError && codeInput) codeInput.focus();
+          hasError = true;
+        }
+        
+        if (!category) {
+          if (errCategory) errCategory.textContent = '구분을 선택해주세요.';
+          const firstCat = (categoryRadios && categoryRadios[0]) || null;
+          if (!hasError && firstCat) firstCat.focus();
+          hasError = true;
+        } else {
+          if (errCategory) errCategory.textContent = '';
+        }
+        
+        if (!installDate) {
+          if (errInstall) errInstall.textContent = '최초설치일을 선택해주세요.';
+          if (!hasError && installDateInput) installDateInput.focus();
+          hasError = true;
+        }
+        
+        // 지역(필수)
+        if (!region) {
+          if (errLocation) errLocation.textContent = '지역을 선택해주세요.';
+          hasError = true;
+        } else {
+          if (errLocation) errLocation.textContent = '';
+        }
+
+        if (hasError) {
+          return;
+        }
+
+        // 중복 체크
+        const existing = allEquipments.find(eq => {
+          const eqSerial = (eq.serialNo || '').trim().toUpperCase();
+          return eqSerial === serialNo.toUpperCase();
+        });
+
+        if (existing) {
+          if (errSerial) errSerial.textContent = '이미 등록된 시리얼 번호입니다.';
+          if (serialInput) {
+            serialInput.focus();
+            serialInput.select();
+          }
+          return;
+        }
+
+        try {
+          // 새 설비 객체 생성
+          const newEq = newEquipment(serialNo, model, codeNo, category, installDate, location);
+          const docId = sanitizeForDocId(serialNo);
+          
+          if (!docId) {
+            if (errSerial) errSerial.textContent = '유효하지 않은 시리얼 번호입니다.';
+            return;
+          }
+
+          // Firebase에 저장
+          const equipmentsCollection = collection(db, 'equipments');
+          const metaCollection = collection(db, 'equipment_meta');
+          
+          const eqRef = doc(equipmentsCollection, docId);
+          await setDoc(eqRef, newEq);
+          
+          const metaRef = doc(metaCollection, docId);
+          await setDoc(metaRef, {
+            id: newEq.id,
+            internalId: newEq.id,
+            serialNo: newEq.serialNo,
+            model: newEq.model || '',
+            codeNo: newEq.codeNo || '',
+            category: newEq.category || '',
+            installDate: newEq.installDate || '',
+            calibrationDate: newEq.calibrationDate || '',
+            location: newEq.location || '',
+            status: newEq.status || '',
+            photoCode: newEq.photoCode || "",
+            thumbUrl: '',
+            thumbDesc: '',
+            updatedAt: new Date().toISOString()
+          });
+
+          // index.html로 이동 (새 설비 ID 전달)
+          window.location.href = `index.html?id=${encodeURIComponent(newEq.id)}`;
+        } catch (err) {
+          console.error('설비 등록 실패:', err);
+          error.textContent = '설비 등록 중 오류가 발생했습니다: ' + err.message;
+        }
+      }
+
+      // 이벤트 리스너 설정 (DOM 로드 후 실행)
+      function setupEventListeners() {
+        const btnNewEquipment = document.getElementById('btnNewEquipment');
+        const btnCancel = document.getElementById('newEquipmentCancel');
+        const btnConfirm = document.getElementById('newEquipmentConfirm');
+        const modal = document.getElementById('newEquipmentModal');
+        const inputSerial = document.getElementById('newEquipmentSerial');
+        const searchInput = document.getElementById('searchInput');
+        
+        syncCategoryRadios();
+
+        if (btnNewEquipment) {
+          btnNewEquipment.addEventListener('click', (e) => {
+            e.preventDefault();
+            openNewEquipmentModal();
+          });
+        } else {
+          console.error('btnNewEquipment 버튼을 찾을 수 없습니다.');
+        }
+
+        // btnAssetMgmt는 setupAssetMgmtButton에서 처리됨
+        
+        if (btnCancel) {
+          btnCancel.addEventListener('click', closeNewEquipmentModal);
+        }
+        
+        if (btnConfirm) {
+          btnConfirm.addEventListener('click', createNewEquipment);
+        }
+        
+        // 모달 배경 클릭 시 닫기
+        if (modal) {
+          modal.addEventListener('click', (e) => {
+            if (e.target.id === 'newEquipmentModal') {
+              closeNewEquipmentModal();
+            }
+          });
+        }
+
+        // 사진 모달 이벤트 제거
+
+        // Enter 키로 등록 (모든 입력 필드에서)
+        const modalInputs = document.querySelectorAll('#newEquipmentModal input, #newEquipmentModal select');
+        modalInputs.forEach(input => {
+          input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              createNewEquipment();
+            }
+          });
+        });
+
+        // ESC 키로 모달 닫기
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            const newEquipmentModal = document.getElementById('newEquipmentModal');
+            if (newEquipmentModal && newEquipmentModal.classList.contains('show')) {
+              closeNewEquipmentModal();
+            }
+            // 사진 모달 제거됨
+          }
+        });
+
+        if (searchInput) {
+          searchInput.addEventListener('input', (e) => {
+            filterEquipments(e.target.value);
+          });
+        }
+        
+        // 카테고리 필터 버튼 이벤트 리스너
+        const catButtons = document.querySelectorAll('.category-filter-btn');
+        if (catButtons.length) {
+          catButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+              const nextCat = btn.dataset.category || 'all';
+              if (selectedCategory === nextCat) return;
+              selectedCategory = nextCat;
+              try { localStorage.setItem(CATEGORY_FILTER_STORAGE_KEY, selectedCategory); } catch (_) {}
+              // 버튼 상태 동기화 후 필터 적용
+              syncCategoryRadios();
+              const searchQuery = document.getElementById('searchInput')?.value || '';
+              filterEquipments(searchQuery);
+            });
+          });
+          // 초기 활성화 상태 보정
+          syncCategoryRadios();
+        }
+
+        const viewButtons = document.querySelectorAll('.view-filter-btn');
+        if (viewButtons.length) {
+          viewButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+              const nextView = btn.dataset.view || 'default';
+              if (viewFilter === nextView) return;
+              viewFilter = nextView;
+              viewButtons.forEach(b => {
+                const isActive = b.dataset.view === viewFilter;
+                b.classList.toggle('active', isActive);
+                b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+              });
+              const searchQuery = document.getElementById('searchInput')?.value || '';
+              filterEquipments(searchQuery);
+            });
+          });
+        }
+
+        
+      }
+
+      // 자산관리 버튼을 로그아웃 버튼 오른쪽에 배치
+      function setupAssetMgmtButton() {
+        const actions = document.querySelector('.topbar .actions');
+        if (!actions) return;
+        
+        // 로그아웃 버튼 찾기
+        const logoutBtn = document.getElementById('btnLogout') || document.getElementById('btnToggleEdit');
+        if (!logoutBtn) return; // 로그아웃 버튼이 없으면 대기
+        
+        let btnAssetMgmt = document.getElementById('btnAssetMgmt');
+        if (!btnAssetMgmt) {
+          btnAssetMgmt = document.createElement('button');
+          btnAssetMgmt.id = 'btnAssetMgmt';
+          btnAssetMgmt.type = 'button';
+          btnAssetMgmt.textContent = '자산관리';
+          btnAssetMgmt.style.background = '#4b5563';
+          btnAssetMgmt.style.color = '#fff';
+          btnAssetMgmt.style.border = '1px solid #4b5563';
+          btnAssetMgmt.style.padding = '8px 16px';
+          btnAssetMgmt.style.borderRadius = '6px';
+          btnAssetMgmt.style.fontWeight = '600';
+          btnAssetMgmt.style.cursor = 'pointer';
+          btnAssetMgmt.style.transition = 'all 0.2s ease';
+          btnAssetMgmt.addEventListener('mouseenter', () => {
+            btnAssetMgmt.style.background = '#374151';
+            btnAssetMgmt.style.borderColor = '#374151';
+          });
+          btnAssetMgmt.addEventListener('mouseleave', () => {
+            btnAssetMgmt.style.background = '#4b5563';
+            btnAssetMgmt.style.borderColor = '#4b5563';
+          });
+          btnAssetMgmt.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.href = 'assets.html';
+          });
+        }
+        
+        // 버튼이 이미 있지만 로그아웃 버튼 다음이 아니면 재배치
+        if (btnAssetMgmt.parentElement !== actions || btnAssetMgmt.previousElementSibling !== logoutBtn) {
+          // 기존 위치에서 제거
+          if (btnAssetMgmt.parentElement) {
+            btnAssetMgmt.remove();
+          }
+          // 로그아웃 버튼 다음에 추가
+          logoutBtn.insertAdjacentElement('afterend', btnAssetMgmt);
+        }
+      }
+
+      // DOM 로드 후 초기화
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          setupEventListeners();
+          loadEquipments();
+          // 로그아웃 버튼이 추가된 후 자산관리 버튼 배치 (여러 번 시도)
+          const trySetup = () => {
+            setupAssetMgmtButton();
+            // 로그아웃 버튼이 아직 없으면 다시 시도
+            const logoutBtn = document.getElementById('btnLogout') || document.getElementById('btnToggleEdit');
+            if (!logoutBtn) {
+              setTimeout(trySetup, 100);
+            }
+          };
+          setTimeout(trySetup, 100);
+          window.addEventListener('auth-state-changed', () => {
+            setTimeout(setupAssetMgmtButton, 100);
+          });
+        });
+      } else {
+        setupEventListeners();
+        loadEquipments();
+        const trySetup = () => {
+          setupAssetMgmtButton();
+          const logoutBtn = document.getElementById('btnLogout') || document.getElementById('btnToggleEdit');
+          if (!logoutBtn) {
+            setTimeout(trySetup, 100);
+          }
+        };
+        setTimeout(trySetup, 100);
+        window.addEventListener('auth-state-changed', () => {
+          setTimeout(setupAssetMgmtButton, 100);
+        });
+      }
+    </script>
+  </body>
+</html>

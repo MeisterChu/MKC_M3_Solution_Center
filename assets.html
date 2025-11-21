@@ -1,0 +1,2204 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>자산관리 - M3 Solution Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script type="module" src="./assets/auth-guard.js"></script>
+  <style>
+    body {
+      margin: 0;
+      background: #f5f5f5;
+    }
+
+    .page {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding: 12px 12px 12px 0;
+      /* 좌측은 페이지에 붙임 */
+      min-height: calc(100vh - 60px);
+    }
+
+    .panel {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid #e5e7eb;
+      gap: 8px;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: #333;
+    }
+
+    .panel-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .panel-actions button {
+      padding: 10px 14px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .panel-actions button.primary {
+      background: #2b2b2b;
+      color: #fff;
+      border-color: #2b2b2b;
+    }
+
+    .panel-actions button:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    .panel-body {
+      padding: 0;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-bottom: 1px solid #e5e7eb;
+      background: #fafafa;
+    }
+
+    .toolbar input[type="search"] {
+      flex: 1;
+      min-width: 160px;
+      padding: 8px 10px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+    }
+
+    /* 필터 패널 박스 */
+    .filter-panel {
+      border: 1px solid #e5e7eb;
+      background: #fff;
+      border-radius: 6px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .filter-panel .filter-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #666;
+      white-space: nowrap;
+    }
+
+    .filter-panel .radio-group {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin: 0;
+    }
+
+    .filter-panel .radio-group label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #333;
+      cursor: pointer;
+      margin: 0;
+    }
+
+    .filter-panel .radio-group input[type="radio"] {
+      margin: 0;
+      cursor: pointer;
+    }
+
+    table.asset-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    table.asset-table thead th {
+      text-align: left;
+      font-size: 13px;
+      color: #666;
+      font-weight: 700;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 10px 12px;
+    }
+
+    table.asset-table tbody td {
+      border-bottom: 1px solid #f0f0f0;
+      padding: 10px 12px;
+      font-size: 14px;
+      color: #333;
+    }
+
+    table.asset-table tbody td.status-cell {
+      padding: 4px 8px;
+    }
+
+    table.asset-table tbody td.status-cell .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    table.asset-table tbody td.status-cell .status-badge.status-normal {
+      background: #27811e;
+    }
+
+    table.asset-table tbody td.status-cell .status-badge.status-damage {
+      background: #7f1d1d;
+    }
+
+    table.asset-table tbody td.status-cell .status-badge.status-fault {
+      background: #dc2626;
+    }
+
+    table.asset-table tbody td.status-cell .status-badge.status-outbound {
+      background: #0d6efd;
+    }
+
+    table.asset-table tbody td.status-cell .status-badge.status-sold {
+      background: #000000;
+    }
+
+    table.asset-table tbody tr {
+      background: #fff;
+      cursor: pointer;
+    }
+
+    table.asset-table tbody tr:hover {
+      background: #f9fafb;
+    }
+
+    table.asset-table tbody tr.selected {
+      background: #fff3e9;
+    }
+
+    td.checkbox-cell,
+    th.checkbox-cell {
+      width: 44px;
+    }
+
+    .empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: #777;
+    }
+
+    #assetNoteInput {
+      border: 2px solid #000000;
+    }
+
+    .modal-body input.input-empty,
+    .modal-body textarea.input-empty {
+      background: #f8fafc;
+    }
+
+    .asset-sort-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border: none;
+      background: transparent;
+      font: inherit;
+      color: inherit;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .asset-sort-button:focus-visible {
+      outline: 2px solid var(--accent-blue);
+      outline-offset: 2px;
+    }
+
+    .asset-sort-button[data-sort-direction="asc"]::after {
+      content: "▲";
+      font-size: 11px;
+      color: var(--accent-blue);
+    }
+
+    .asset-sort-button[data-sort-direction="desc"]::after {
+      content: "▼";
+      font-size: 11px;
+      color: var(--accent-blue);
+    }
+
+    .asset-sort-button[data-sort-direction="none"]::after {
+      content: "";
+    }
+
+    /* Modal */
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.35);
+      z-index: 2000;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-card {
+      width: min(92vw, 910px);
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+      border: none;
+    }
+
+    /* 설비연결 모달은 더 작은 크기 */
+    #linkEquipmentModal .modal-card {
+      width: min(90vw, 420px);
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid #f3f4f6;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: #fff;
+    }
+
+    .modal-body {
+      padding: 24px;
+      display: grid;
+      gap: 20px;
+      background: #fff;
+    }
+
+    /* Compact two-column modal layout: form on left, photo on right */
+    .modal-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      column-gap: 24px;
+      align-items: stretch;
+    }
+
+    @media (max-width: 900px) {
+      .modal-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .form-grid>* {
+      min-width: 0;
+    }
+
+    .form-grid .full {
+      grid-column: 1 / -1;
+    }
+
+    .modal-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .modal-row-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .modal-row-3>* {
+      min-width: 0;
+    }
+
+    @media (max-width: 640px) {
+
+      .modal-row,
+      .modal-row-3 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .modal-body label {
+      display: grid;
+      gap: 8px;
+      font-size: 13px;
+      color: #6b7280;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .form-col label {
+      font-size: 11px !important;
+      text-transform: none !important;
+      letter-spacing: 0 !important;
+      color: #475569 !important;
+      font-weight: 500;
+    }
+
+    .modal-body input,
+    .modal-body textarea {
+      padding: 12px 16px;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      font-size: 13px;
+      background-color: #f3f4f6;
+      transition: all 0.2s ease;
+      color: #1f2937;
+    }
+
+    .modal-body input:focus,
+    .modal-body textarea:focus {
+      background-color: #fff;
+      border-color: #0d6efd;
+      box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.1);
+      outline: none;
+    }
+
+    .modal-body textarea {
+      resize: none;
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .radio-group label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Generic toggle group (used for asset type and region) */
+    .toggle-group,
+    .region-toggle {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .toggle-group .toggle-btn,
+    .region-toggle .toggle-btn {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 6px 14px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      background: #fff;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      color: #9ca3af;
+      flex: 1 1 0;
+    }
+
+    .toggle-group .toggle-btn:hover,
+    .region-toggle .toggle-btn:hover {
+      border-color: #6b7280;
+      color: #6b7280;
+    }
+
+    .toggle-group .toggle-btn.active,
+    .region-toggle .toggle-btn.active {
+      background: #374151;
+      color: #fff;
+      border-color: #374151;
+      box-shadow: 0 4px 8px rgba(55, 65, 81, 0.25);
+      font-size: 17px;
+    }
+
+    @media (max-width: 1080px) {
+
+      .toggle-group,
+      .region-toggle {
+        flex-wrap: wrap;
+      }
+    }
+
+    /* Inline panels for type + region */
+    .inline-panels-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 640px) {
+      .inline-panels-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .inline-panel {
+      border: 1px solid #f3f4f6;
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .inline-panel .panel-title {
+      font-weight: 800;
+      font-size: 14px;
+      color: #333;
+    }
+
+    /* Required label style */
+    .required-label {
+      color: #7f1d1d;
+      font-weight: 800;
+    }
+
+    .stack-panels {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    /* Ensure clear separation between form and right panel */
+    .form-col {
+      min-width: 0;
+    }
+
+    .photo-col {
+      min-width: 0;
+      max-width: 100%;
+      border-left: 1px solid transparent;
+      padding-left: 16px;
+    }
+
+    /* Final row split: 수량/비고 vs 사진등록 */
+    .two-col-final {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 640px) {
+      .two-col-final {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .photo-panel {
+      border: 1px solid #f3f4f6;
+      background: #fff;
+      border-radius: 16px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      overflow: hidden;
+    }
+
+    .photo-header {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e5e7eb;
+      font-weight: 800;
+      font-size: 14px;
+      color: #333;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .photo-body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      min-height: 110px;
+    }
+
+    .photo-body .preview-frame {
+      width: 100%;
+      height: 100%;
+      max-height: 180px;
+      border: 1px dashed #e5e7eb;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: #fafafa;
+    }
+
+    .photo-body img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .photo-empty {
+      color: #888;
+      font-size: 13px;
+    }
+
+    .photo-actions {
+      padding: 0;
+      border-top: none;
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-sm {
+      padding: 8px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .btn-sm.primary {
+      background: #2b2b2b;
+      color: #fff;
+      border-color: #2b2b2b;
+    }
+
+    .btn-sm.gray {
+      background: #6b7280;
+      color: #fff;
+      border-color: #6b7280;
+    }
+
+    #btnLinkEquipment {
+      background: #cfe9ff;
+      color: #0f3c64;
+      border-color: #a7d4ff;
+    }
+
+    #btnLinkEquipment.is-unlink {
+      background: #ffd9d9;
+      color: #7f1d1d;
+      border-color: #f5b5b5;
+    }
+
+    /* Status toggle on modal header */
+    .status-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #f3f4f6;
+      padding: 4px;
+      border-radius: 9999px;
+      width: 100%;
+    }
+
+    .status-toggle .status-btn {
+      padding: 8px 10px;
+      border: none;
+      border-radius: 9999px;
+      background: transparent;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      white-space: nowrap;
+      color: #6b7280;
+      transition: all 0.2s ease;
+      flex: 1 1 0;
+      min-width: 0;
+      text-align: center;
+    }
+
+    .status-toggle .status-btn:hover {
+      color: #1f2937;
+    }
+
+    .status-toggle .status-btn.active {
+      background: #374151; /* fallback */
+      color: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Status specific colors when active */
+    .status-toggle .status-btn.active[data-status="normal"] {
+      background: #27811e;
+      color: #fff;
+    }
+
+    .status-toggle .status-btn.active[data-status="damage"] {
+      background: #7f1d1d;
+      color: #fff;
+    }
+
+    .status-toggle .status-btn.active[data-status="fault"] {
+      background: #dc2626;
+      color: #fff;
+    }
+
+    .status-toggle .status-btn.active[data-status="outbound"] {
+      background: #0d6efd;
+      color: #fff;
+    }
+
+    .status-toggle .status-btn.active[data-status="sold"] {
+      background: #000000;
+      color: #fff;
+    }
+
+    /* Keep photo box fixed size and fill (crop) */
+    .photo-col {
+      display: grid;
+      grid-template-rows: auto auto;
+    }
+
+    .photo-col .photos-grid {
+      height: auto;
+    }
+
+    .photo-col .photo-box {
+      aspect-ratio: 8 / 5.3; /* */
+      height: auto;
+      position: relative;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .photo-col .photo-box::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.7);
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 1;
+    }
+
+    .photo-col .photo-box:hover::after {
+      opacity: 0;
+    }
+
+    .photo-col .photo-box img {
+      object-fit: cover;
+    }
+
+    .photo-col .photo-box img {
+      cursor: zoom-in;
+    }
+
+    /* Prevent overlay from blocking outside clicks */
+    .photo-overlay {
+      pointer-events: none;
+    }
+
+    .photo-overlay button,
+    .photo-overlay input {
+      pointer-events: auto;
+    }
+
+    /* Lightbox for photo preview */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 5000;
+    }
+
+    .lightbox.show {
+      display: flex;
+    }
+
+    .lightbox img {
+      max-width: 90vw;
+      max-height: 90vh;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Ensure photo modal stays above edit modal */
+    #assetPhotoModal {
+      z-index: 8000;
+    }
+
+    /* Ensure confirm/alert modals stack above edit modal */
+    #confirmModal,
+    #alertModal {
+      z-index: 7000;
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .radio-group label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      padding: 12px 16px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .btn {
+      padding: 10px 14px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn.primary {
+      background: #28a745;
+      color: #fff;
+      border-color: #28a745;
+    }
+
+    .btn.danger {
+      background: #b91c1c;
+      color: #fff;
+      border-color: #b91c1c;
+    }
+
+    .btn.gray {
+      background: #6b7280;
+      color: #fff;
+      border-color: #6b7280;
+    }
+
+    @media (max-width: 720px) {
+      .panel-actions {
+        flex-wrap: wrap;
+      }
+    }
+
+    /* Embed mode: hide page chrome and tighten spacing */
+    body.embed .topbar {
+      display: none;
+    }
+
+    body.embed .page {
+      padding: 0;
+      min-height: auto;
+    }
+
+    body.embed .panel {
+      border: none;
+      box-shadow: none;
+      border-radius: 0;
+    }
+
+    body.embed .panel-header {
+      border-radius: 0;
+    }
+
+    body.embed .panel-body {
+      padding: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+  <header class="topbar" role="banner">
+    <div class="brand"><span class="brand-highlight" aria-label="M3 Solution Center 라벨">M3 Solution Center</span></div>
+    <div class="actions" role="toolbar" aria-label="상단 도구 모음"></div>
+  </header>
+
+  <main class="page" role="main">
+    <section class="panel">
+      <div class="panel-header">
+        <h2 class="panel-title">자산관리</h2>
+        <div class="panel-actions">
+          <button id="btnAddAsset" class="primary" type="button">자산추가</button>
+          <button id="btnDeleteSelected" type="button" disabled>선택삭제</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="toolbar">
+          <div class="filter-panel">
+            <span class="filter-label">자산분류:</span>
+            <div class="radio-group" role="radiogroup" aria-label="자산분류 필터">
+              <label>
+                <input type="radio" name="assetTypeFilter" value="" checked />
+                <span>전체</span>
+              </label>
+              <label>
+                <input type="radio" name="assetTypeFilter" value="고정자산" />
+                <span>고정자산</span>
+              </label>
+              <label>
+                <input type="radio" name="assetTypeFilter" value="재고" />
+                <span>재고</span>
+              </label>
+              <label>
+                <input type="radio" name="assetTypeFilter" value="소모품" />
+                <span>소모품</span>
+              </label>
+            </div>
+          </div>
+          <input id="searchInput" type="search" placeholder="자산번호, 자산분류, MKC 코드, 자산명, Serial, Code No. 검색" />
+        </div>
+        <table class="asset-table" aria-label="자산 목록 테이블">
+          <thead>
+            <tr>
+              <th class="checkbox-cell"><input id="checkAll" type="checkbox" aria-label="전체 선택" /></th>
+              <th scope="col"><button class="asset-sort-button" type="button" data-sort-key="assetNo">자산관리번호</button>
+              </th>
+              <th scope="col"><button class="asset-sort-button" type="button" data-sort-key="status">상태</button></th>
+              <th scope="col"><button class="asset-sort-button" type="button" data-sort-key="assetType">자산분류</button>
+              </th>
+              <th scope="col"><button class="asset-sort-button" type="button" data-sort-key="mkcCode">MKC_자산코드</button>
+              </th>
+              <th scope="col"><button class="asset-sort-button" type="button" data-sort-key="name">자산명</button></th>
+              <th scope="col"><button class="asset-sort-button" type="button" data-sort-key="serialNo">Serial
+                  No.</button></th>
+              <th scope="col"><button class="asset-sort-button" type="button" data-sort-key="codeNo">Code No.</button>
+              </th>
+              <th scope="col"><button class="asset-sort-button" type="button" data-sort-key="location">위치</button></th>
+              <th scope="col"><button class="asset-sort-button" type="button" data-sort-key="acquiredDate">취득일</button>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="assetsBody">
+            <tr class="empty">
+              <td colspan="10">자산이 없습니다. 우측 상단의 자산추가 버튼을 눌러 등록하세요.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- 사진 확대 모달 (index.html 스타일 차용) -->
+  <div id="assetPhotoModal" class="modal" aria-hidden="true">
+    <div class="modal-backdrop" data-close="1"></div>
+    <div class="modal-content" role="dialog" aria-modal="true" aria-label="사진 확대보기">
+      <img id="assetModalImage" alt="확대 이미지" />
+      <button id="assetModalClose" class="btn-sm" type="button">닫기</button>
+    </div>
+  </div>
+
+  <!-- 자산 편집 모달 -->
+  <div id="assetModal" class="modal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="assetModalTitle">
+      <div class="modal-header">
+        <div id="assetStatusToggle" class="status-toggle" role="group" aria-label="자산 상태 설정">
+          <button class="status-btn" type="button" data-status="normal">정상</button>
+          <button class="status-btn" type="button" data-status="damage">파손</button>
+          <button class="status-btn" type="button" data-status="fault">고장</button>
+          <button class="status-btn" type="button" data-status="outbound">반출</button>
+          <button class="status-btn" type="button" data-status="sold">판매됨</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="modal-layout">
+          <div class="form-col">
+            <div class="form-grid">
+
+              <label>자산관리번호
+                <input id="assetNoInput" type="text" readonly />
+              </label>
+              <label>MKC_자산코드
+                <input id="mkcCodeInput" type="text" />
+              </label>
+
+              <label><span class="required-label">자산명</span>
+                <input id="assetNameInput" type="text" />
+              </label>
+              <label>Code No.
+                <input id="codeNoInput" type="text" />
+              </label>
+
+              <label>Serial No.
+                <input id="serialInput" type="text" />
+              </label>
+
+              <label>취득일
+                <input id="acquiredDateInput" type="date" />
+              </label>
+
+              <div class="modal-row-3 full">
+                <label><span class="required-label">위치(대분류)</span>
+                  <input id="locMajorInput" type="text" />
+                </label>
+                <label>위치(중분류)
+                  <input id="locMiddleInput" type="text" />
+                </label>
+                <label>위치(소분류)
+                  <input id="locSubInput" type="text" />
+                </label>
+              </div>
+              <div class="full"
+                style="margin-top: -6px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <button id="btnLinkEquipment" class="btn-sm" type="button">설비연결</button>
+                <div id="linkedEquipmentInfo" style="display: none; flex: 1; display: flex; gap: 8px; flex-wrap: wrap;">
+                  <input type="text" id="linkedModelDisplay" readonly
+                    style="flex: 1; min-width: 200px; padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f3f4f6; color: #333; font-size: 13px;"
+                    placeholder="설비 모델명" />
+                  <input type="text" id="linkedSerialDisplay" readonly
+                    style="flex: 1; min-width: 200px; padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f3f4f6; color: #333; font-size: 13px;"
+                    placeholder="설비 Serial No." />
+                </div>
+              </div>
+
+              <label class="full">비고
+                <textarea id="assetNoteInput" rows="6"></textarea>
+              </label>
+            </div>
+          </div>
+          <div class="photo-col">
+            <div class="stack-panels">
+              <div class="inline-panel">
+                <div class="panel-title required-label">자산분류</div>
+                <div class="toggle-group" id="assetTypeToggle" role="group" aria-label="자산분류">
+                  <button class="toggle-btn" data-value="재고" type="button">재고</button>
+                  <button class="toggle-btn" data-value="고정자산" type="button">고정자산</button>
+                  <button class="toggle-btn" data-value="소모품" type="button">소모품</button>
+                </div>
+              </div>
+              <div class="inline-panel">
+                <div class="panel-title required-label">지역</div>
+                <div class="region-toggle" id="regionToggle">
+                  <button class="toggle-btn" data-value="시흥" type="button">시흥</button>
+                  <button class="toggle-btn" data-value="부산" type="button">부산</button>
+                  <button class="toggle-btn" data-value="대구" type="button">대구</button>
+                  <button class="toggle-btn" data-value="대전" type="button">대전</button>
+                </div>
+              </div>
+            </div>
+            <div class="photos-grid" style="grid-template-columns: 1fr;">
+              <div class="photo-box" id="assetPhotoBox">
+                <img id="assetPhotoPreview" alt="자산 사진 미리보기" hidden />
+                <div id="assetPhotoEmpty" class="photo-empty"></div>
+                <div class="photo-overlay" aria-hidden="false">
+                  <input id="assetPhotoFile" type="file" accept="image/*" hidden />
+                  <button id="btnChooseAssetPhoto" class="btn-sm" type="button">사진 선택</button>
+                  <button id="btnClearAssetPhoto" class="btn-sm gray" type="button">삭제</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="assetCancel" class="btn gray" type="button">취소</button>
+        <button id="assetSave" class="btn primary" type="button">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 설비연결 시리얼번호 입력 모달 -->
+  <div id="linkEquipmentModal" class="modal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="linkEquipmentModalTitle">
+      <div class="modal-header">
+        <div id="linkEquipmentModalTitle">설비연결</div>
+      </div>
+      <div class="modal-body">
+        <label>
+          <span class="required-label">설비 Serial No.</span>
+          <input id="linkEquipmentSerialInput" type="text" placeholder="연결할 설비의 Serial No.를 입력하세요" />
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button id="linkEquipmentCancel" class="btn gray" type="button">취소</button>
+        <button id="linkEquipmentConfirm" class="btn primary" type="button">연결</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 자산분류/지역 변경 확인 모달 -->
+  <div id="confirmChangeModal" class="modal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" style="max-width: 480px;">
+      <div class="modal-header">
+        <div style="font-weight: 800; font-size: 16px;">⚠️ 변경 확인</div>
+      </div>
+      <div class="modal-body">
+        <p id="confirmChangeMessage" style="margin: 0; font-size: 15px; line-height: 1.6; color: #374151;">
+          자산분류 또는 지역을 변경하시겠습니까?<br>
+          이 정보는 거의 변경되지 않는 중요한 정보입니다.
+        </p>
+      </div>
+      <div class="modal-actions">
+        <button id="confirmChangeCancel" class="btn gray" type="button">취소</button>
+        <button id="confirmChangeConfirm" class="btn danger" type="button">변경</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Detect embed mode via query param
+    try {
+      const params = new URLSearchParams(location.search);
+      if (params.get('embed') === '1') document.body.classList.add('embed');
+    } catch (_) { }
+    import { getFirebaseApp } from './assets/firebase-config.js';
+    import { getFirestore, collection, getDocs, doc, getDoc, setDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-lite.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAq6JLKJRa0kbaSRBc1sM31QX3BHAuVtdU",
+      authDomain: "m3-equipment-manager.firebaseapp.com",
+      projectId: "m3-equipment-manager",
+      storageBucket: "m3-equipment-manager.firebasestorage.app",
+      messagingSenderId: "57982817073",
+      appId: "1:57982817073:web:d7477047779d89427cd610"
+    };
+
+    const app = getFirebaseApp();
+    const db = getFirestore(app);
+    const assetsCol = collection(db, 'assets'); // 각 자산을 자산관리번호로 문서 저장
+
+    // CORS 오류 처리: Firestore SDK가 내부적으로 실시간 채널을 시도하지만,
+    // 실제로는 실시간 리스너를 사용하지 않으므로 기능에 영향 없음
+    // 브라우저 콘솔 오류는 무시해도 됨
+    window.addEventListener('error', (event) => {
+      if (event.message && event.message.includes('access control checks') && 
+          event.message.includes('firestore.googleapis.com')) {
+        event.preventDefault();
+        console.debug('Firestore 내부 채널 CORS 오류 무시 (기능에 영향 없음)');
+      }
+    }, true);
+
+    let allAssets = [];
+    let filteredAssets = [];
+    let editingAssetNo = null;
+    let editingIsNew = false;
+    let isModalOpen = false; // 모달 열림 상태 추적
+    let selectedAssetTypeFilter = ''; // 선택된 자산분류 필터
+
+    // 토스트 메시지 표시 함수
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      toast.textContent = message;
+      toast.className = 'toast';
+      if (type === 'success') toast.classList.add('success');
+      else if (type === 'error') toast.classList.add('error');
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    function pad2(n) { return String(n).padStart(2, '0'); }
+    function pad4(n) { return String(n).padStart(4, '0'); }
+
+    // 시리얼번호를 Firestore docId로 변환
+    function sanitizeForDocId(serialNo) {
+      if (!serialNo || !serialNo.trim()) return null;
+      return serialNo.trim().replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_');
+    }
+
+    // location 문자열을 파싱 (예: "시흥/대분류/중분류" -> { major, middle, minor })
+    function parseLocation(s) {
+      if (!s) return { major: "", middle: "", minor: "" };
+      const parts = String(s).split('/').map(p => p.trim());
+      return { major: parts[0] || "", middle: parts[1] || "", minor: parts[2] || "" };
+    }
+
+    // 시리얼번호로 equipment_meta에서 설비 정보 조회
+    async function findEquipmentBySerial(serialNo) {
+      if (!serialNo || !serialNo.trim()) {
+        throw new Error('시리얼번호를 입력해 주세요.');
+      }
+      const docId = sanitizeForDocId(serialNo);
+      if (!docId) {
+        throw new Error('유효하지 않은 시리얼번호입니다.');
+      }
+      try {
+        const metaCol = collection(db, 'equipment_meta');
+        const metaRef = doc(metaCol, docId);
+        const metaSnap = await getDoc(metaRef);
+        if (!metaSnap.exists()) {
+          throw new Error('해당 시리얼번호의 설비를 찾을 수 없습니다.');
+        }
+        return metaSnap.data();
+      } catch (e) {
+        if (e.message) throw e;
+        throw new Error('설비 정보를 조회하는 중 오류가 발생했습니다: ' + String(e));
+      }
+    }
+
+    function generateAssetNo(existing = allAssets) {
+      const yy = pad2(new Date().getFullYear() % 100);
+      let maxSeq = 0;
+      for (const a of existing) {
+        const m = /^M3SC_(\d{2})_(\d{4})$/.exec(a.assetNo || '');
+        if (m && m[1] === yy) {
+          const n = parseInt(m[2], 10);
+          if (!Number.isNaN(n)) maxSeq = Math.max(maxSeq, n);
+        }
+      }
+      return `M3SC_${yy}_${pad4(maxSeq + 1)}`;
+    }
+
+    function normalizeAsset(a) {
+      return {
+        assetNo: a.assetNo || '',
+        mkcCode: a.mkcCode || '',
+        assetType: a.assetType || '재고',
+        status: a.status || 'normal',
+        name: a.name || '',
+        serialNo: a.serialNo || '',
+        codeNo: a.codeNo || '',
+        quantity: typeof a.quantity === 'number' ? a.quantity : (parseInt(a.quantity, 10) || 0),
+        location: {
+          region: (a.location && a.location.region) || a.locRegion || '',
+          major: (a.location && a.location.major) || a.locMajor || '',
+          middle: (a.location && a.location.middle) || a.locMiddle || '',
+          sub: (a.location && a.location.sub) || a.locSub || ''
+        },
+        acquiredDate: a.acquiredDate || '',
+        note: a.note || '',
+        photo: a.photo && typeof a.photo === 'object' ? { url: a.photo.url || '' } : { url: a.photoUrl || '' },
+        linkedEquipment: a.linkedEquipment || null // 연결된 측정기정보
+      };
+    }
+
+    function getLocationString(asset) {
+      const loc = asset.location || {};
+      return [loc.region, loc.major, loc.middle, loc.sub].filter(Boolean).join(' / ');
+    }
+
+    const statusLabelMap = {
+      'normal': '정상',
+      'damage': '파손',
+      'fault': '고장',
+      'outbound': '반출',
+      'sold': '판매됨'
+    };
+
+    const sortState = { column: 'name', direction: 'asc' };
+
+    const sortValueGetters = {
+      assetNo: (a) => a.assetNo || '',
+      status: (a) => statusLabelMap[a.status || 'normal'] || '',
+      assetType: (a) => a.assetType || '',
+      mkcCode: (a) => a.mkcCode || '',
+      name: (a) => a.name || '',
+      serialNo: (a) => a.serialNo || '',
+      codeNo: (a) => a.codeNo || '',
+      location: (a) => getLocationString(a) || '',
+      acquiredDate: (a) => a.acquiredDate || ''
+    };
+
+    const numericSortKeys = new Set(['assetNo']);
+
+    function getSortValue(asset, column) {
+      const getter = sortValueGetters[column];
+      const value = getter ? getter(asset) : '';
+      return typeof value === 'string' ? value : String(value ?? '');
+    }
+
+    function compareAssetsBySort(a, b) {
+      const key = sortState.column;
+      const direction = sortState.direction === 'desc' ? -1 : 1;
+      const options = numericSortKeys.has(key) ? { numeric: true, sensitivity: 'base' } : { sensitivity: 'base' };
+      const valA = getSortValue(a, key);
+      const valB = getSortValue(b, key);
+      let cmp = valA.localeCompare(valB, 'ko', options);
+      if (cmp === 0 && key !== 'assetNo') {
+        const fallbackA = getSortValue(a, 'assetNo');
+        const fallbackB = getSortValue(b, 'assetNo');
+        cmp = fallbackA.localeCompare(fallbackB, 'ko', { numeric: true, sensitivity: 'base' });
+      }
+      return cmp * direction;
+    }
+
+    function sortAssets(list) {
+      return [...list].sort(compareAssetsBySort);
+    }
+
+    function updateSortIndicators() {
+      const buttons = document.querySelectorAll('.asset-sort-button');
+      buttons.forEach(btn => {
+        const key = btn.dataset.sortKey;
+        const dir = key === sortState.column ? sortState.direction : 'none';
+        btn.setAttribute('data-sort-direction', dir);
+      });
+    }
+
+    function applySort(column) {
+      if (!column) return;
+      if (sortState.column === column) {
+        sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortState.column = column;
+        sortState.direction = 'asc';
+      }
+      filteredAssets = sortAssets(filteredAssets);
+      renderList();
+    }
+
+    const emptyFieldSelector = '#assetModal .modal-body input:not([type="radio"]):not([type="checkbox"]):not([type="file"]), #assetModal .modal-body textarea:not(#assetNoteInput)';
+    let emptyFieldWatcherInitialized = false;
+
+    function updateEmptyFieldHighlight(el) {
+      if (!el) return;
+      const value = (el.value || '').trim();
+      el.classList.toggle('input-empty', !value);
+    }
+
+    function refreshEmptyFieldHighlights() {
+      document.querySelectorAll(emptyFieldSelector).forEach(updateEmptyFieldHighlight);
+      const note = document.getElementById('assetNoteInput');
+      if (note) note.classList.remove('input-empty');
+    }
+
+    function handleModalFieldInput(event) {
+      if (!event.target.matches(emptyFieldSelector)) return;
+      updateEmptyFieldHighlight(event.target);
+    }
+
+    function ensureEmptyFieldWatcher() {
+      if (emptyFieldWatcherInitialized) return;
+      const modal = document.getElementById('assetModal');
+      if (!modal) return;
+      modal.addEventListener('input', handleModalFieldInput);
+      modal.addEventListener('change', handleModalFieldInput);
+      emptyFieldWatcherInitialized = true;
+    }
+
+    // 인증 상태 대기 함수
+    async function waitForAuth() {
+      // 이미 인증된 경우 즉시 반환
+      if (window.currentUser) {
+        return;
+      }
+      // auth-state-changed 이벤트를 기다림
+      return new Promise((resolve) => {
+        // 최대 5초 대기
+        const timeout = setTimeout(() => {
+          resolve(); // 타임아웃 시에도 진행
+        }, 5000);
+        
+        const handler = () => {
+          clearTimeout(timeout);
+          window.removeEventListener('auth-state-changed', handler);
+          resolve();
+        };
+        window.addEventListener('auth-state-changed', handler);
+        
+        // 이미 인증된 경우 즉시 해제
+        if (window.currentUser) {
+          clearTimeout(timeout);
+          window.removeEventListener('auth-state-changed', handler);
+          resolve();
+        }
+      });
+    }
+
+    async function loadAssets() {
+      try {
+        // 인증 상태 대기 (권한 오류 방지)
+        await waitForAuth();
+
+        const snapshot = await getDocs(assetsCol);
+        allAssets = [];
+        snapshot.forEach(docSnap => {
+          const a = normalizeAsset(docSnap.data());
+          if (!a.assetNo) a.assetNo = docSnap.id; // 안전장치
+          allAssets.push(a);
+        });
+        filteredAssets = sortAssets(allAssets);
+        renderList();
+      } catch (e) {
+        console.error('자산 로드 실패:', e);
+        const body = document.getElementById('assetsBody');
+        if (body) {
+          body.innerHTML = '';
+          const tr = document.createElement('tr');
+          tr.className = 'empty';
+          const td = document.createElement('td');
+          td.colSpan = 10;
+          if (e.code === 'permission-denied') {
+            // 권한 오류인 경우 기존 데이터가 있으면 계속 사용
+            if (allAssets.length > 0) {
+              console.warn('Firestore 권한 오류 발생. 기존 데이터를 사용합니다.');
+              filteredAssets = sortAssets(allAssets);
+              renderList();
+              return;
+            }
+            td.innerHTML = `
+              <div style="color: #dc2626; font-weight: 600; margin-bottom: 8px;">권한 오류</div>
+              <div style="color: #666; font-size: 14px; line-height: 1.6;">
+                Firestore 보안 규칙에서 'assets' 컬렉션에 대한 접근 권한이 없습니다.<br>
+                Firebase Console에서 보안 규칙을 확인하고 수정해주세요.
+              </div>
+            `;
+          } else {
+            td.textContent = `자산 로드 중 오류가 발생했습니다: ${e.message || '알 수 없는 오류'}`;
+          }
+          tr.appendChild(td);
+          body.appendChild(tr);
+        }
+        showToast('자산 데이터를 불러올 수 없습니다. 권한을 확인해주세요.', 'error');
+      }
+    }
+
+    function renderList() {
+      const body = document.getElementById('assetsBody');
+      body.innerHTML = '';
+      const rows = filteredAssets;
+      if (!rows.length) {
+        const tr = document.createElement('tr');
+        tr.className = 'empty';
+        const td = document.createElement('td');
+        td.colSpan = 10;
+        td.textContent = '자산이 없습니다. 우측 상단의 자산추가 버튼을 눌러 등록하세요.';
+        tr.appendChild(td);
+        body.appendChild(tr);
+        updateDeleteButton();
+        updateSortIndicators();
+        return;
+      }
+      for (const a of rows) {
+        const tr = document.createElement('tr');
+        tr.dataset.assetNo = a.assetNo;
+        const tdChk = document.createElement('td');
+        tdChk.className = 'checkbox-cell';
+        const chk = document.createElement('input');
+        chk.type = 'checkbox';
+        chk.addEventListener('change', updateDeleteButton);
+        tdChk.appendChild(chk);
+        const tdNo = document.createElement('td'); tdNo.textContent = a.assetNo;
+        // 상태 표시
+        const tdStatus = document.createElement('td');
+        tdStatus.className = 'status-cell';
+        const status = a.status || 'normal';
+        const statusBadge = document.createElement('span');
+        statusBadge.className = `status-badge status-${status}`;
+        statusBadge.textContent = statusLabelMap[status] || status;
+        tdStatus.appendChild(statusBadge);
+        const tdType = document.createElement('td'); tdType.textContent = a.assetType || '';
+        const tdMkc = document.createElement('td'); tdMkc.textContent = a.mkcCode;
+        const tdName = document.createElement('td'); tdName.textContent = a.name;
+        const tdSerial = document.createElement('td'); tdSerial.textContent = a.serialNo || '';
+        const tdCode = document.createElement('td'); tdCode.textContent = a.codeNo || '';
+        const tdLoc = document.createElement('td');
+        tdLoc.textContent = getLocationString(a);
+        const tdAcq = document.createElement('td'); tdAcq.textContent = a.acquiredDate || '';
+        tr.append(tdChk, tdNo, tdStatus, tdType, tdMkc, tdName, tdSerial, tdCode, tdLoc, tdAcq);
+        tr.addEventListener('click', (e) => {
+          if (e.target instanceof HTMLInputElement) return; // 체크박스 클릭은 무시
+          openEditModal(a.assetNo);
+        });
+        body.appendChild(tr);
+      }
+      updateDeleteButton();
+      updateSortIndicators();
+    }
+
+    function filterList(query) {
+      const q = (query || '').toLowerCase();
+      let filtered = allAssets;
+
+      // 자산분류 필터 적용
+      if (selectedAssetTypeFilter) {
+        filtered = filtered.filter(a => (a.assetType || '') === selectedAssetTypeFilter);
+      }
+
+      // 검색어 필터 적용
+      if (q) {
+        filtered = filtered.filter(a => {
+          const locText = getLocationString(a).toLowerCase();
+          return (a.assetNo || '').toLowerCase().includes(q)
+            || (a.mkcCode || '').toLowerCase().includes(q)
+            || (a.assetType || '').toLowerCase().includes(q)
+            || (a.name || '').toLowerCase().includes(q)
+            || (a.serialNo || '').toLowerCase().includes(q)
+            || (a.codeNo || '').toLowerCase().includes(q)
+            || locText.includes(q);
+        });
+      }
+
+      filteredAssets = sortAssets(filtered);
+      renderList();
+    }
+
+    async function addAsset() {
+      const assetNo = generateAssetNo();
+      // 저장은 하지 않고 편집 모달만 오픈 (사용자가 저장 눌러야 등록)
+      openEditModal(assetNo, true);
+    }
+
+    function openEditModal(assetNo, isNew = false) {
+      editingAssetNo = assetNo;
+      let asset = allAssets.find(a => a.assetNo === assetNo);
+      editingIsNew = false;
+      if (!asset || isNew) {
+        asset = { assetNo, mkcCode: '', assetType: '', status: 'normal', name: '', serialNo: '', codeNo: '', quantity: 1, location: { region: '', major: '', middle: '', sub: '' }, acquiredDate: '', note: '', photo: { url: '' }, linkedEquipment: null };
+        editingIsNew = true;
+      }
+      const modal = document.getElementById('assetModal');
+      isModalOpen = true; // 모달 열림 상태 설정
+      document.getElementById('assetNoInput').value = asset.assetNo;
+      document.getElementById('mkcCodeInput').value = asset.mkcCode || '';
+      document.getElementById('assetNameInput').value = asset.name || '';
+      document.getElementById('serialInput').value = asset.serialNo || '';
+      document.getElementById('codeNoInput').value = asset.codeNo || '';
+      // quantity field removed
+      // set region toggle
+      const region = (asset.location && asset.location.region) || '';
+      const regionButtons = document.querySelectorAll('#regionToggle .toggle-btn');
+      regionButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.value === region);
+      });
+      document.getElementById('locMajorInput').value = (asset.location && asset.location.major) || '';
+      document.getElementById('locMiddleInput').value = (asset.location && asset.location.middle) || '';
+      document.getElementById('locSubInput').value = (asset.location && asset.location.sub) || '';
+      document.getElementById('acquiredDateInput').value = asset.acquiredDate || '';
+      document.getElementById('assetNoteInput').value = asset.note || '';
+
+      // 연결된 설비 정보 표시
+      updateLinkedEquipmentDisplay(asset.linkedEquipment);
+      // 링크된 설비가 있다면 위치 동기화 확인 및 입력 막기 적용
+      if (asset.linkedEquipment && asset.linkedEquipment.serialNo) {
+        syncLocationFromLinkedEquipmentIfChanged().catch(() => { /* ignore */ });
+      }
+      // photo preview
+      const img = document.getElementById('assetPhotoPreview');
+      const empty = document.getElementById('assetPhotoEmpty');
+      const url = (asset.photo && asset.photo.url) || '';
+      const box = document.getElementById('assetPhotoBox');
+      if (url) {
+        img.src = url;
+        img.hidden = false;
+        empty.style.display = 'none';
+        box && box.classList.remove('empty');
+      } else {
+        img.src = '';
+        img.hidden = true;
+        empty.style.display = 'block';
+        box && box.classList.add('empty');
+      }
+      // set asset type toggle
+      const typeButtons = document.querySelectorAll('#assetTypeToggle .toggle-btn');
+      typeButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.value === (asset.assetType || ''));
+      });
+      // set status toggle
+      const statButtons = document.querySelectorAll('#assetStatusToggle .status-btn');
+      statButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.status === (asset.status || 'normal'));
+      });
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden', 'false');
+      ensureEmptyFieldWatcher();
+      refreshEmptyFieldHighlights();
+    }
+
+    // 위치 입력 필드 활성/비활성 전환
+    function setLocationFieldsDisabled(disabled) {
+      const majors = document.getElementById('locMajorInput');
+      const middles = document.getElementById('locMiddleInput');
+      const subs = document.getElementById('locSubInput');
+      [majors, middles, subs].forEach(el => { if (el) el.disabled = !!disabled; });
+    }
+
+    // 연결된 설비 정보 표시 업데이트
+    function updateLinkedEquipmentDisplay(linkedEquipment) {
+      const infoDiv = document.getElementById('linkedEquipmentInfo');
+      const modelInput = document.getElementById('linkedModelDisplay');
+      const serialInput = document.getElementById('linkedSerialDisplay');
+      const btn = document.getElementById('btnLinkEquipment');
+
+      if (linkedEquipment && linkedEquipment.model && linkedEquipment.serialNo) {
+        modelInput.value = linkedEquipment.model || '';
+        serialInput.value = linkedEquipment.serialNo || '';
+        infoDiv.style.display = 'flex';
+        btn.textContent = '설비연결해제';
+        btn.classList.add('is-unlink');
+        // 설비에 연결된 경우 위치(대/중/소) 입력 비활성화
+        setLocationFieldsDisabled(true);
+      } else {
+        modelInput.value = '';
+        serialInput.value = '';
+        infoDiv.style.display = 'none';
+        btn.textContent = '설비연결';
+        btn.classList.remove('is-unlink');
+        // 미연결 시 위치 입력 가능
+        setLocationFieldsDisabled(false);
+      }
+    }
+
+    // 현재 연결된 설비 정보 가져오기
+    function getLinkedEquipment() {
+      const modelInput = document.getElementById('linkedModelDisplay');
+      const serialInput = document.getElementById('linkedSerialDisplay');
+      const model = modelInput.value.trim();
+      const serial = serialInput.value.trim();
+      if (model && serial) {
+        return { model, serialNo: serial };
+      }
+      return null;
+    }
+
+    function closeEditModal() {
+      const modal = document.getElementById('assetModal');
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden', 'true');
+      editingAssetNo = null;
+      editingIsNew = false;
+      isModalOpen = false; // 모달 닫힘 상태 설정
+    }
+
+    // 현재 폼의 지역/위치 값을 가져오기
+    function getFormRegionAndLocation() {
+      const selectedRegion = (document.querySelector('#regionToggle .toggle-btn.active')?.dataset.value) || '';
+      return {
+        region: selectedRegion,
+        major: document.getElementById('locMajorInput').value.trim(),
+        middle: document.getElementById('locMiddleInput').value.trim(),
+        sub: document.getElementById('locSubInput').value.trim(),
+      };
+    }
+
+    // 설비 메타에서 가져온 위치를 폼에 반영
+    function applyLocationToForm({ region, major, middle, model }) {
+      // 지역 토글 설정
+      const regionButtons = document.querySelectorAll('#regionToggle .toggle-btn');
+      regionButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.value === (region || ''));
+      });
+      // 대/중/소 입력
+      document.getElementById('locMajorInput').value = major || '';
+      document.getElementById('locMiddleInput').value = middle || '';
+      // 소분류는 "'모델명' 에 설치" 형식 유지
+      document.getElementById('locSubInput').value = model ? ("'" + model + "' 에 설치") : '';
+      refreshEmptyFieldHighlights();
+    }
+
+    // 링크된 설비의 위치가 바뀌었는지 확인 후 필요 시 동기화
+    async function syncLocationFromLinkedEquipmentIfChanged() {
+      const linked = getLinkedEquipment();
+      if (!linked || !linked.serialNo) return;
+      try {
+        const equipment = await findEquipmentBySerial(linked.serialNo);
+        const parsedLoc = parseLocation(equipment.location || '');
+        // equipment_meta는 "지역/대분류/중분류" 순서로 문자열 저장
+        const region = parsedLoc.major || '';
+        const major = parsedLoc.middle || '';
+        const middle = parsedLoc.minor || '';
+        const now = getFormRegionAndLocation();
+        const changed = (now.region !== region) || (now.major !== major) || (now.middle !== middle);
+        if (changed) {
+          applyLocationToForm({ region, major, middle, model: equipment.model || linked.model || '' });
+          showToast('설비 위치 변경을 감지하여 동기화했습니다.', 'success');
+        }
+        // 연결 상태에서는 입력 잠금 유지
+        setLocationFieldsDisabled(true);
+      } catch (_) {
+        // 조회 실패시 조용히 무시 (저장 시에도 한 번 더 시도)
+      }
+    }
+
+    async function saveEdit() {
+      if (!editingAssetNo) return;
+      const idx = allAssets.findIndex(a => a.assetNo === editingAssetNo);
+      const selectedType = (document.querySelector('#assetTypeToggle .toggle-btn.active')?.dataset.value) || '';
+      const selectedStatus = (document.querySelector('#assetStatusToggle .status-btn.active')?.dataset.status) || 'normal';
+      const selectedRegion = (document.querySelector('#regionToggle .toggle-btn.active')?.dataset.value) || '';
+      const nameVal = document.getElementById('assetNameInput').value.trim();
+      const majorVal = document.getElementById('locMajorInput').value.trim();
+      // 필수값 검증
+      if (!nameVal) { alert('자산명은 필수입니다.'); document.getElementById('assetNameInput').focus(); return; }
+      if (!selectedType) { alert('자산분류를 선택해 주세요.'); return; }
+      if (!selectedRegion) { alert('지역을 선택해 주세요.'); return; }
+      if (!majorVal) { alert('위치(대분류)를 입력해 주세요.'); document.getElementById('locMajorInput').focus(); return; }
+
+      const updated = {
+        assetNo: document.getElementById('assetNoInput').value,
+        mkcCode: document.getElementById('mkcCodeInput').value.trim(),
+        assetType: selectedType,
+        status: selectedStatus,
+        name: nameVal,
+        serialNo: document.getElementById('serialInput').value.trim(),
+        codeNo: document.getElementById('codeNoInput').value.trim(),
+        location: {
+          region: selectedRegion,
+          major: majorVal,
+          middle: document.getElementById('locMiddleInput').value.trim(),
+          sub: document.getElementById('locSubInput').value.trim()
+        },
+        acquiredDate: document.getElementById('acquiredDateInput').value,
+        note: document.getElementById('assetNoteInput').value.trim(),
+        photo: {
+          url: (() => {
+            const photoImg = document.getElementById('assetPhotoPreview');
+            // 이미지가 hidden 상태이거나 src가 없으면 공백
+            if (photoImg.hidden || !photoImg.src) return '';
+            const src = photoImg.src.trim();
+            // data URL이 아니거나 빈 문자열이면 공백
+            if (!src || src === 'about:blank' || src === window.location.href) return '';
+            return src;
+          })()
+        },
+        linkedEquipment: getLinkedEquipment() // 연결된 측정기정보
+      };
+
+      // 연결된 설비가 있는 경우 저장 직전에 설비 위치 변화 확인 및 반영
+      if (updated.linkedEquipment && updated.linkedEquipment.serialNo) {
+        try {
+          const equipment = await findEquipmentBySerial(updated.linkedEquipment.serialNo);
+          const parsedLoc = parseLocation(equipment.location || '');
+          const eqRegion = parsedLoc.major || '';
+          const eqMajor = parsedLoc.middle || '';
+          const eqMiddle = parsedLoc.minor || '';
+          const changed = (updated.location.region !== eqRegion) || (updated.location.major !== eqMajor) || (updated.location.middle !== eqMiddle);
+          if (changed) {
+            updated.location.region = eqRegion;
+            updated.location.major = eqMajor;
+            updated.location.middle = eqMiddle;
+            updated.location.sub = equipment.model ? `'${equipment.model}' 에 설치` : updated.location.sub;
+            // 폼에도 반영
+            applyLocationToForm({ region: eqRegion, major: eqMajor, middle: eqMiddle, model: equipment.model || '' });
+            showToast('설비 위치 변경을 감지하여 동기화했습니다.', 'success');
+          }
+          // 위치 입력 비활성화 유지
+          setLocationFieldsDisabled(true);
+        } catch (_) { /* ignore */ }
+      }
+      const confirmed = window.confirm('변경 내용을 저장하시겠습니까?');
+      if (!confirmed) return;
+      // 개별 문서 업데이트 (자산관리번호로 식별)
+      await setDoc(doc(assetsCol, updated.assetNo), updated, { merge: true });
+      if (editingIsNew) {
+        allAssets = [...allAssets, updated];
+      } else if (idx >= 0) {
+        const newAssets = [...allAssets];
+        newAssets[idx] = updated;
+        allAssets = newAssets;
+      }
+      filteredAssets = sortAssets(allAssets);
+      renderList();
+      closeEditModal();
+    }
+
+    function getSelectedAssetNos() {
+      return Array.from(document.querySelectorAll('#assetsBody tr input[type="checkbox"]:checked'))
+        .map(chk => chk.closest('tr')?.dataset.assetNo)
+        .filter(Boolean);
+    }
+
+    function updateDeleteButton() {
+      const btn = document.getElementById('btnDeleteSelected');
+      const any = getSelectedAssetNos().length > 0;
+      btn.disabled = !any;
+    }
+
+    async function deleteSelected() {
+      const toDelete = new Set(getSelectedAssetNos());
+      if (!toDelete.size) return;
+      // Firestore에서 각 자산 문서를 삭제
+      await Promise.all(Array.from(toDelete).map(id => deleteDoc(doc(assetsCol, id))));
+      allAssets = allAssets.filter(a => !toDelete.has(a.assetNo));
+      filteredAssets = sortAssets(allAssets);
+      renderList();
+    }
+
+    // 설비목록 버튼을 로그아웃 버튼 오른쪽에 배치
+    function setupBackToListButton() {
+      const actions = document.querySelector('.topbar .actions');
+      if (!actions) return;
+      
+      // 로그아웃 버튼 찾기
+      const logoutBtn = document.getElementById('btnLogout') || document.getElementById('btnToggleEdit');
+      if (!logoutBtn) return; // 로그아웃 버튼이 없으면 대기
+      
+      let btnBackToList = document.getElementById('btnBackToList');
+      if (!btnBackToList) {
+        btnBackToList = document.createElement('button');
+        btnBackToList.id = 'btnBackToList';
+        btnBackToList.type = 'button';
+        btnBackToList.textContent = '설비목록';
+        btnBackToList.style.background = '#4b5563';
+        btnBackToList.style.color = '#fff';
+        btnBackToList.style.border = '1px solid #4b5563';
+        btnBackToList.style.padding = '8px 16px';
+        btnBackToList.style.borderRadius = '6px';
+        btnBackToList.style.fontWeight = '600';
+        btnBackToList.style.cursor = 'pointer';
+        btnBackToList.style.transition = 'all 0.2s ease';
+        btnBackToList.addEventListener('mouseenter', () => {
+          btnBackToList.style.background = '#374151';
+          btnBackToList.style.borderColor = '#374151';
+        });
+        btnBackToList.addEventListener('mouseleave', () => {
+          btnBackToList.style.background = '#4b5563';
+          btnBackToList.style.borderColor = '#4b5563';
+        });
+        btnBackToList.addEventListener('click', () => {
+          window.location.href = 'list.html';
+        });
+      }
+      
+      // 버튼이 이미 있지만 로그아웃 버튼 다음이 아니면 재배치
+      if (btnBackToList.parentElement !== actions || btnBackToList.previousElementSibling !== logoutBtn) {
+        // 기존 위치에서 제거
+        if (btnBackToList.parentElement) {
+          btnBackToList.remove();
+        }
+        // 로그아웃 버튼 다음에 추가
+        logoutBtn.insertAdjacentElement('afterend', btnBackToList);
+      }
+    }
+
+    // Event wiring
+    document.getElementById('btnAddAsset').addEventListener('click', addAsset);
+    document.getElementById('btnDeleteSelected').addEventListener('click', deleteSelected);
+    document.getElementById('checkAll').addEventListener('change', (e) => {
+      const checked = e.target.checked;
+      document.querySelectorAll('#assetsBody input[type="checkbox"]').forEach(chk => {
+        chk.checked = checked;
+      });
+      updateDeleteButton();
+    });
+    document.getElementById('searchInput').addEventListener('input', (e) => filterList(e.target.value));
+    document.querySelectorAll('.asset-sort-button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.sortKey;
+        applySort(key);
+      });
+    });
+
+    // 자산분류 필터 라디오 버튼 이벤트
+    document.querySelectorAll('input[name="assetTypeFilter"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        selectedAssetTypeFilter = e.target.value;
+        const searchQuery = document.getElementById('searchInput').value;
+        filterList(searchQuery);
+      });
+    });
+    document.getElementById('assetCancel').addEventListener('click', closeEditModal);
+    document.getElementById('assetSave').addEventListener('click', saveEdit);
+
+    // 설비연결/해제 버튼 클릭 이벤트
+    document.getElementById('btnLinkEquipment').addEventListener('click', () => {
+      const btn = document.getElementById('btnLinkEquipment');
+      const linkedEquipment = getLinkedEquipment();
+
+      if (linkedEquipment) {
+        // 연결 해제
+        if (confirm('설비 연결을 해제하시겠습니까?\n\n연결 해제 후 위치 정보를 확인하고 업데이트해 주세요.')) {
+          updateLinkedEquipmentDisplay(null);
+          // 위치 입력박스 초기화
+          document.getElementById('locMajorInput').value = '';
+          document.getElementById('locMiddleInput').value = '';
+          document.getElementById('locSubInput').value = '';
+          // 해제 시 입력 가능
+          setLocationFieldsDisabled(false);
+          refreshEmptyFieldHighlights();
+          showToast('위치 정보를 확인하고 업데이트해 주세요.', 'info');
+        }
+      } else {
+        // 연결 모달 열기
+        const linkModal = document.getElementById('linkEquipmentModal');
+        document.getElementById('linkEquipmentSerialInput').value = '';
+        linkModal.classList.add('show');
+        linkModal.setAttribute('aria-hidden', 'false');
+        setTimeout(() => {
+          document.getElementById('linkEquipmentSerialInput').focus();
+        }, 100);
+      }
+    });
+
+    // 설비연결 모달 이벤트
+    const linkEquipmentModal = document.getElementById('linkEquipmentModal');
+    const linkEquipmentSerialInput = document.getElementById('linkEquipmentSerialInput');
+    const linkEquipmentCancel = document.getElementById('linkEquipmentCancel');
+    const linkEquipmentConfirm = document.getElementById('linkEquipmentConfirm');
+
+    function closeLinkEquipmentModal() {
+      linkEquipmentModal.classList.remove('show');
+      linkEquipmentModal.setAttribute('aria-hidden', 'true');
+      linkEquipmentSerialInput.value = '';
+    }
+
+    linkEquipmentCancel.addEventListener('click', closeLinkEquipmentModal);
+    linkEquipmentModal.addEventListener('click', (e) => {
+      if (e.target.id === 'linkEquipmentModal') closeLinkEquipmentModal();
+    });
+
+    linkEquipmentConfirm.addEventListener('click', async () => {
+      const serialNo = linkEquipmentSerialInput.value.trim();
+      if (!serialNo) {
+        alert('설비 Serial No.를 입력해 주세요.');
+        linkEquipmentSerialInput.focus();
+        return;
+      }
+      try {
+        const equipment = await findEquipmentBySerial(serialNo);
+        const locationStr = equipment.location || '';
+        const parsedLoc = parseLocation(locationStr);
+
+        // location 문자열의 첫 번째 부분이 지역 (시흥, 부산, 대구, 대전)
+        const region = parsedLoc.major || '';
+        const major = parsedLoc.middle || '';
+        const middle = parsedLoc.minor || '';
+
+        // 지역 토글 설정
+        const regionButtons = document.querySelectorAll('#regionToggle .toggle-btn');
+        regionButtons.forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.value === region);
+        });
+
+        // 대분류, 중분류 입력
+        document.getElementById('locMajorInput').value = major;
+        document.getElementById('locMiddleInput').value = middle;
+
+        // 소분류에 "'모델명' 에 설치" 형식으로 입력
+        const model = equipment.model || '';
+        document.getElementById('locSubInput').value = model ? `'${model}' 에 설치` : '';
+        // 연결된 상태에서는 위치 입력을 비활성화
+        setLocationFieldsDisabled(true);
+        refreshEmptyFieldHighlights();
+
+        // 연결된 설비 정보 표시
+        updateLinkedEquipmentDisplay({
+          model: equipment.model || '',
+          serialNo: equipment.serialNo || serialNo
+        });
+
+        closeLinkEquipmentModal();
+      } catch (e) {
+        alert(e.message || '설비 정보를 가져오는 중 오류가 발생했습니다.');
+      }
+    });
+
+    // 모달에서 Enter 키로 연결
+    linkEquipmentSerialInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        linkEquipmentConfirm.click();
+      }
+    });
+
+    // Escape 키로 모달 닫기
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && linkEquipmentModal.classList.contains('show')) {
+        closeLinkEquipmentModal();
+      }
+    });
+
+    // Status toggle handlers
+    document.querySelectorAll('#assetStatusToggle .status-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const all = btn.parentElement.querySelectorAll('.status-btn');
+        all.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+    // Region toggle handlers with confirmation
+    let pendingRegionChange = null;
+    let originalRegion = null;
+
+    document.querySelectorAll('#regionToggle .toggle-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const currentActive = btn.parentElement.querySelector('.toggle-btn.active');
+        const currentValue = currentActive?.dataset.value || '';
+        const newValue = btn.dataset.value;
+
+        // If clicking the same button, do nothing
+        if (currentValue === newValue) return;
+
+        // Store original value on first load
+        if (originalRegion === null) {
+          originalRegion = currentValue;
+        }
+
+        // Show confirmation modal
+        pendingRegionChange = { btn, newValue };
+        showConfirmChangeModal('지역');
+      });
+    });
+
+    // Asset type toggle handlers with confirmation
+    let pendingTypeChange = null;
+    let originalAssetType = null;
+
+    document.querySelectorAll('#assetTypeToggle .toggle-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const currentActive = btn.parentElement.querySelector('.toggle-btn.active');
+        const currentValue = currentActive?.dataset.value || '';
+        const newValue = btn.dataset.value;
+
+        // If clicking the same button, do nothing
+        if (currentValue === newValue) return;
+
+        // Store original value on first load
+        if (originalAssetType === null) {
+          originalAssetType = currentValue;
+        }
+
+        // Show confirmation modal
+        pendingTypeChange = { btn, newValue };
+        showConfirmChangeModal('자산분류');
+      });
+    });
+
+    // Confirmation modal functions
+    function showConfirmChangeModal(fieldName) {
+      const modal = document.getElementById('confirmChangeModal');
+      const message = document.getElementById('confirmChangeMessage');
+      message.innerHTML = `<strong>${fieldName}</strong>을(를) 변경하시겠습니까?<br>이 정보는 거의 변경되지 않는 중요한 정보입니다.`;
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function hideConfirmChangeModal() {
+      const modal = document.getElementById('confirmChangeModal');
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+
+    // Confirmation modal button handlers
+    document.getElementById('confirmChangeCancel').addEventListener('click', () => {
+      pendingRegionChange = null;
+      pendingTypeChange = null;
+      hideConfirmChangeModal();
+    });
+
+    document.getElementById('confirmChangeConfirm').addEventListener('click', () => {
+      // Apply region change
+      if (pendingRegionChange) {
+        const { btn } = pendingRegionChange;
+        const all = btn.parentElement.querySelectorAll('.toggle-btn');
+        all.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        pendingRegionChange = null;
+      }
+
+      // Apply asset type change
+      if (pendingTypeChange) {
+        const { btn } = pendingTypeChange;
+        const all = btn.parentElement.querySelectorAll('.toggle-btn');
+        all.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        pendingTypeChange = null;
+      }
+
+      hideConfirmChangeModal();
+    });
+
+    // Close modal on backdrop click
+    document.getElementById('confirmChangeModal').addEventListener('click', (e) => {
+      if (e.target.id === 'confirmChangeModal') {
+        pendingRegionChange = null;
+        pendingTypeChange = null;
+        hideConfirmChangeModal();
+      }
+    });
+    // Photo actions
+    const photoFile = document.getElementById('assetPhotoFile');
+    const btnChoosePhoto = document.getElementById('btnChooseAssetPhoto');
+    const btnClearPhoto = document.getElementById('btnClearAssetPhoto');
+    const photoImg = document.getElementById('assetPhotoPreview');
+    const photoEmpty = document.getElementById('assetPhotoEmpty');
+    btnChoosePhoto.addEventListener('click', () => photoFile.click());
+    btnClearPhoto.addEventListener('click', () => {
+      photoImg.src = '';
+      photoImg.hidden = true;
+      photoEmpty.style.display = 'block';
+      const box = document.getElementById('assetPhotoBox');
+      box && box.classList.add('empty');
+    });
+    // Resize/compress helper (similar to index.html approach)
+    async function resizeToDataURL(file, { maxBytes = 500 * 1024, maxW = 1600, maxH = 1200 } = {}) {
+      const dataURL = await new Promise((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onerror = () => reject(new Error('이미지 로드 실패'));
+        fr.onload = () => resolve(fr.result);
+        fr.readAsDataURL(file);
+      });
+      const img = await new Promise((resolve, reject) => {
+        const i = new Image();
+        i.onload = () => resolve(i);
+        i.onerror = () => reject(new Error('이미지 디코드 실패'));
+        i.src = dataURL;
+      });
+      let { width, height } = img;
+      const ratio = Math.min(1, maxW / width, maxH / height);
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(width * ratio));
+      canvas.height = Math.max(1, Math.round(height * ratio));
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      // Try quality from 0.9 down to 0.6 to fit under maxBytes
+      for (let q of [0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6]) {
+        const out = canvas.toDataURL('image/jpeg', q);
+        if (out.length * 0.75 <= maxBytes) return out; // base64 overhead approx 4/3
+      }
+      return canvas.toDataURL('image/jpeg', 0.55);
+    }
+    photoFile.addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      try {
+        const url = await resizeToDataURL(file, { maxBytes: 500 * 1024, maxW: 1600, maxH: 1200 });
+        photoImg.src = url;
+        photoImg.hidden = false;
+        photoEmpty.style.display = 'none';
+        const box = document.getElementById('assetPhotoBox');
+        box && box.classList.remove('empty');
+      } catch (err) {
+        console.error(err);
+        alert('이미지 처리 중 오류가 발생했습니다. 다른 이미지를 시도해 주세요.');
+      } finally {
+        e.target.value = '';
+      }
+    });
+
+    // Photo lightbox preview
+    const lightbox = document.createElement('div');
+    lightbox.id = 'assetLightbox';
+    lightbox.className = 'lightbox';
+    const lbImg = document.createElement('img');
+    lbImg.id = 'assetLightboxImg';
+    lbImg.alt = '자산 사진 확대보기';
+    lightbox.appendChild(lbImg);
+    document.body.appendChild(lightbox);
+
+    function openLightbox(src) {
+      if (!src) return;
+      lbImg.src = src;
+      lightbox.classList.add('show');
+      lightbox.setAttribute('aria-hidden', 'false');
+    }
+    function closeLightbox() {
+      lightbox.classList.remove('show');
+      lightbox.setAttribute('aria-hidden', 'true');
+      lbImg.src = '';
+    }
+    lightbox.addEventListener('click', closeLightbox);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && lightbox.classList.contains('show')) {
+        closeLightbox();
+      }
+    });
+    // Replace simple lightbox with modal like index.html
+    const assetPhotoModal = document.getElementById('assetPhotoModal');
+    const assetModalImage = document.getElementById('assetModalImage');
+    const assetModalClose = document.getElementById('assetModalClose');
+    function openAssetPhotoModal(src) {
+      if (!src) return;
+      assetModalImage.src = src;
+      assetPhotoModal.classList.add('show');
+      assetPhotoModal.setAttribute('aria-hidden', 'false');
+    }
+    function closeAssetPhotoModal() {
+      assetPhotoModal.classList.remove('show');
+      assetPhotoModal.setAttribute('aria-hidden', 'true');
+      assetModalImage.removeAttribute('src');
+    }
+    assetPhotoModal.addEventListener('click', (e) => {
+      if (e.target.dataset.close === '1') closeAssetPhotoModal();
+    });
+    assetModalClose.addEventListener('click', closeAssetPhotoModal);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && assetPhotoModal.classList.contains('show')) {
+        closeAssetPhotoModal();
+      }
+    });
+    photoImg.addEventListener('click', () => {
+      if (!photoImg.hidden && photoImg.src) openAssetPhotoModal(photoImg.src);
+    });
+    const assetPhotoBox = document.getElementById('assetPhotoBox');
+    if (assetPhotoBox) {
+      assetPhotoBox.addEventListener('click', (e) => {
+        const isButton = !!e.target.closest('button');
+        if (isButton) return;
+        if (!photoImg.hidden && photoImg.src) openAssetPhotoModal(photoImg.src);
+      });
+    }
+    // 외부 영역 클릭 시 모달이 닫히지 않도록 제거
+    // document.getElementById('assetModal').addEventListener('click', (e) => {
+    //   if (e.target.id === 'assetModal') closeEditModal();
+    // });
+
+    document.addEventListener('keydown', (e) => {
+      const modal = document.getElementById('assetModal');
+      if (!modal.classList.contains('show')) return;
+      if (e.key === 'Escape') closeEditModal();
+      // 엔터 키로 저장하는 기능 제거
+    });
+
+    // 페이지 이탈 시 경고 (모달이 열려있을 때만)
+    window.addEventListener('beforeunload', (e) => {
+      if (isModalOpen) {
+        e.preventDefault();
+        e.returnValue = '자산 편집 중입니다. 페이지를 떠나시면 변경사항이 저장되지 않을 수 있습니다.';
+        return e.returnValue;
+      }
+    });
+
+    // init
+    loadAssets();
+    // 로그아웃 버튼이 추가된 후 설비목록 버튼 배치 (여러 번 시도)
+    const trySetup = () => {
+      setupBackToListButton();
+      // 로그아웃 버튼이 아직 없으면 다시 시도
+      const logoutBtn = document.getElementById('btnLogout') || document.getElementById('btnToggleEdit');
+      if (!logoutBtn) {
+        setTimeout(trySetup, 100);
+      }
+    };
+    setTimeout(trySetup, 100);
+    window.addEventListener('auth-state-changed', () => {
+      setTimeout(setupBackToListButton, 100);
+    });
+  </script>
+</body>
+
+</html>

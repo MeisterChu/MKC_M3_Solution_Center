@@ -1,0 +1,28 @@
+# Backup 폴더 제외
+Backup/
+
+# macOS 시스템 파일
+.DS_Store
+
+# 로그 파일
+*.log
+
+# 임시 파일
+*.tmp
+*.temp
+
+# 에디터 설정 파일 (선택사항)
+.vscode/
+.idea/
+
+# 환경 변수 파일 (민감 정보가 있다면)
+.env
+.env.local
+
+# Node modules (만약 나중에 사용한다면)
+node_modules/
+
+# 빌드 파일 (만약 나중에 사용한다면)
+dist/
+build/
+
