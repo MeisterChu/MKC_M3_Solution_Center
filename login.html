@@ -61,8 +61,8 @@
       const auth = getAuth(app);
       try { await setPersistence(auth, browserSessionPersistence); } catch (_) {}
 
-      const params = new URLSearchParams(location.search);
-      const redirect = params.get('redirect') || 'list.html';
+      // 로그인 후 항상 설비목록 페이지로 이동
+      const redirect = 'list.html';
 
       const $ = (s) => document.querySelector(s);
       const email = $('#email');
