@@ -1,6 +1,6 @@
 // Firebase Auth guard for protected pages
 // - Ensures user is signed in (session persists until browser is closed)
-// - Redirects to login when unauthenticated
+// - Redirects to index.html (login page) when unauthenticated
 // - Exposes window.firebaseAuth, window.currentUser, window.signOutCurrent
 // - Adds a Logout button and user label to the topbar actions
 
@@ -168,7 +168,7 @@ onAuthStateChanged(auth, (user) => {
 
   if (!user) {
     const redirectTo = encodeURIComponent(location.pathname + location.search);
-    // Avoid redirect loops if already on login
+    // Avoid redirect loops if already on index.html (login page)
     if (!/index\.html$/i.test(location.pathname)) {
       location.replace(`index.html?redirect=${redirectTo}`);
     }
