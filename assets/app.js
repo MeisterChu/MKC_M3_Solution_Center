@@ -1676,7 +1676,21 @@
     if (els.btnToggleEdit) {
       els.btnToggleEdit.setAttribute('aria-pressed', String(on));
       // on 상태(편집 가능)에서는 버튼이 '로그아웃' 동작을 의미
-      els.btnToggleEdit.textContent = on ? '로그아웃' : '로그인';
+      // auth-guard.js와 동일한 아이콘 사용
+      const ICON_LOGOUT = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>`;
+      if (on) {
+        // 로그아웃 버튼: 아이콘 포함
+        els.btnToggleEdit.innerHTML = `${ICON_LOGOUT}<span class="btn-text">로그아웃</span>`;
+        els.btnToggleEdit.style.display = 'inline-flex';
+        els.btnToggleEdit.style.alignItems = 'center';
+        els.btnToggleEdit.style.gap = '6px';
+      } else {
+        // 로그인 버튼: 텍스트만 (아이콘 없음)
+        els.btnToggleEdit.innerHTML = '<span class="btn-text">로그인</span>';
+        els.btnToggleEdit.style.display = 'inline-flex';
+        els.btnToggleEdit.style.alignItems = 'center';
+        els.btnToggleEdit.style.gap = '6px';
+      }
     }
     if (els.btnSave) els.btnSave.disabled = !on;
     getEditableControls().forEach(el => { try { el.disabled = !on; } catch(_) {} });
@@ -3359,6 +3373,36 @@
       const deleteBtn = document.getElementById('histModalDelete');
       const dateTodayBtn = document.getElementById('histModalDateToday');
       cancel && cancel.addEventListener('click', closeHistModal);
+      
+      // 유형 선택 시 스타일 업데이트 함수
+      window.updateHistModalTypeStyle = function() {
+        const modal = document.getElementById('histModal');
+        if (!modal) return;
+        const typeInputs = modal.querySelectorAll('input[name="histModalType"]');
+        const checkedInput = modal.querySelector('input[name="histModalType"]:checked');
+        
+        typeInputs.forEach(input => {
+          const span = input.nextElementSibling;
+          if (!span || span.tagName !== 'SPAN') return;
+          
+          if (input === checkedInput) {
+            // 선택된 항목: 폰트 크게
+            span.style.fontSize = '14px';
+            span.style.opacity = '1';
+          } else {
+            // 선택되지 않은 항목: 희미하게
+            span.style.fontSize = '12px';
+            span.style.opacity = checkedInput ? '0.4' : '1';
+          }
+        });
+      };
+      
+      // 유형 선택 이벤트 리스너 (모달 내부에 위임)
+      modal.addEventListener('change', (e) => {
+        if (e.target.name === 'histModalType') {
+          window.updateHistModalTypeStyle();
+        }
+      });
       dateTodayBtn && dateTodayBtn.addEventListener('click', () => {
         const dateEl = document.getElementById('histModalDate');
         if (dateEl) {
@@ -3599,6 +3643,13 @@
     // aria-hidden을 먼저 false로 설정하여 접근성 문제 방지
     modal.setAttribute('aria-hidden','false');
     modal.classList.add('show');
+    
+    // 유형 선택 스타일 업데이트
+    setTimeout(() => {
+      if (window.updateHistModalTypeStyle) {
+        window.updateHistModalTypeStyle();
+      }
+    }, 0);
   }
   
   // 비밀번호 입력 모달

@@ -302,10 +302,10 @@
       background: #fff;
     }
 
-    /* Compact two-column modal layout: form on left, photo on right */
+    /* Compact two-column modal layout: photo on left, form on right */
     .modal-layout {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 340px;
+      grid-template-columns: 340px minmax(0, 1fr);
       column-gap: 24px;
       align-items: stretch;
     }
@@ -505,13 +505,15 @@
     /* Ensure clear separation between form and right panel */
     .form-col {
       min-width: 0;
+      padding-top: 10px;
+      padding-right: 10px !important;
+      /* Increased to ensure visibility */
     }
 
     .photo-col {
       min-width: 0;
       max-width: 100%;
-      border-left: 1px solid transparent;
-      padding-left: 16px;
+      /* Removed left padding/border since it's now on the left */
     }
 
     /* Final row split: 수량/비고 vs 사진등록 */
@@ -653,7 +655,8 @@
     }
 
     .status-toggle .status-btn.active {
-      background: #374151; /* fallback */
+      background: #374151;
+      /* fallback */
       color: #fff;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
@@ -695,7 +698,8 @@
     }
 
     .photo-col .photo-box {
-      aspect-ratio: 8 / 5.3; /* */
+      aspect-ratio: 8 / 5.3;
+      /* */
       height: auto;
       position: relative;
       border: 1px solid #e5e7eb;
@@ -788,6 +792,85 @@
       justify-content: flex-end;
       padding: 12px 16px;
       border-top: 1px solid #e5e7eb;
+    }
+
+    /* Mobile Optimizations */
+    @media (max-width: 768px) {
+      .page {
+        padding: 0;
+        /* Full width on mobile */
+      }
+
+      .panel {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+      }
+
+      .panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .panel-actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
+
+      .toolbar {
+        flex-wrap: wrap;
+      }
+
+      .toolbar input[type="search"] {
+        width: 100%;
+        min-width: 0;
+      }
+
+      .filter-panel {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .filter-panel .radio-group {
+        flex-wrap: wrap;
+      }
+
+      /* Table scrolling */
+      .panel-body {
+        overflow-x: auto;
+      }
+
+      table.asset-table {
+        min-width: 600px;
+        /* Ensure table doesn't squash too much */
+      }
+
+      /* Modal adjustments */
+      .modal-card {
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .modal-body {
+        flex: 1;
+        overflow-y: auto;
+      }
+
+      .modal-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .photo-col {
+        border-left: none;
+        padding-left: 0;
+        border-top: 1px solid #e5e7eb;
+        padding-top: 16px;
+      }
     }
 
     .btn {
@@ -894,20 +977,29 @@
           <thead>
             <tr>
               <th class="checkbox-cell"><input id="checkAll" type="checkbox" aria-label="전체 선택" /></th>
-              <th scope="col"><button class="asset-sort-button" type="button" data-sort-key="assetNo">자산관리번호</button>
+              <th scope="col" class="col-asset-no"><button class="asset-sort-button" type="button"
+                  data-sort-key="assetNo">자산관리번호</button>
               </th>
-              <th scope="col"><button class="asset-sort-button" type="button" data-sort-key="status">상태</button></th>
-              <th scope="col"><button class="asset-sort-button" type="button" data-sort-key="assetType">자산분류</button>
+              <th scope="col" class="col-status"><button class="asset-sort-button" type="button"
+                  data-sort-key="status">상태</button></th>
+              <th scope="col" class="col-category"><button class="asset-sort-button" type="button"
+                  data-sort-key="assetType">자산분류</button>
               </th>
-              <th scope="col"><button class="asset-sort-button" type="button" data-sort-key="mkcCode">MKC_자산코드</button>
+              <th scope="col" class="col-mkc"><button class="asset-sort-button" type="button"
+                  data-sort-key="mkcCode">MKC_자산코드</button>
               </th>
-              <th scope="col"><button class="asset-sort-button" type="button" data-sort-key="name">자산명</button></th>
-              <th scope="col"><button class="asset-sort-button" type="button" data-sort-key="serialNo">Serial
+              <th scope="col" class="col-name"><button class="asset-sort-button" type="button"
+                  data-sort-key="name">자산명</button></th>
+              <th scope="col" class="col-serial"><button class="asset-sort-button" type="button"
+                  data-sort-key="serialNo">Serial
                   No.</button></th>
-              <th scope="col"><button class="asset-sort-button" type="button" data-sort-key="codeNo">Code No.</button>
+              <th scope="col" class="col-code"><button class="asset-sort-button" type="button"
+                  data-sort-key="codeNo">Code No.</button>
               </th>
-              <th scope="col"><button class="asset-sort-button" type="button" data-sort-key="location">위치</button></th>
-              <th scope="col"><button class="asset-sort-button" type="button" data-sort-key="acquiredDate">취득일</button>
+              <th scope="col" class="col-location"><button class="asset-sort-button" type="button"
+                  data-sort-key="location">위치</button></th>
+              <th scope="col" class="col-date"><button class="asset-sort-button" type="button"
+                  data-sort-key="acquiredDate">취득일</button>
               </th>
             </tr>
           </thead>
@@ -944,6 +1036,38 @@
       </div>
       <div class="modal-body">
         <div class="modal-layout">
+          <div class="photo-col">
+            <div class="stack-panels">
+              <div class="inline-panel">
+                <div class="panel-title required-label">자산분류</div>
+                <div class="toggle-group" id="assetTypeToggle" role="group" aria-label="자산분류">
+                  <button class="toggle-btn" data-value="재고" type="button">재고</button>
+                  <button class="toggle-btn" data-value="고정자산" type="button">고정자산</button>
+                  <button class="toggle-btn" data-value="소모품" type="button">소모품</button>
+                </div>
+              </div>
+              <div class="inline-panel">
+                <div class="panel-title required-label">지역</div>
+                <div class="region-toggle" id="regionToggle">
+                  <button class="toggle-btn" data-value="시흥" type="button">시흥</button>
+                  <button class="toggle-btn" data-value="부산" type="button">부산</button>
+                  <button class="toggle-btn" data-value="대구" type="button">대구</button>
+                  <button class="toggle-btn" data-value="대전" type="button">대전</button>
+                </div>
+              </div>
+            </div>
+            <div class="photos-grid" style="grid-template-columns: 1fr;">
+              <div class="photo-box" id="assetPhotoBox">
+                <img id="assetPhotoPreview" alt="자산 사진 미리보기" hidden />
+                <div id="assetPhotoEmpty" class="photo-empty"></div>
+                <div class="photo-overlay" aria-hidden="false">
+                  <input id="assetPhotoFile" type="file" accept="image/*" hidden />
+                  <button id="btnChooseAssetPhoto" class="btn-sm" type="button">사진 선택</button>
+                  <button id="btnClearAssetPhoto" class="btn-sm gray" type="button">삭제</button>
+                </div>
+              </div>
+            </div>
+          </div>
           <div class="form-col">
             <div class="form-grid">
 
@@ -996,38 +1120,6 @@
               <label class="full">비고
                 <textarea id="assetNoteInput" rows="6"></textarea>
               </label>
-            </div>
-          </div>
-          <div class="photo-col">
-            <div class="stack-panels">
-              <div class="inline-panel">
-                <div class="panel-title required-label">자산분류</div>
-                <div class="toggle-group" id="assetTypeToggle" role="group" aria-label="자산분류">
-                  <button class="toggle-btn" data-value="재고" type="button">재고</button>
-                  <button class="toggle-btn" data-value="고정자산" type="button">고정자산</button>
-                  <button class="toggle-btn" data-value="소모품" type="button">소모품</button>
-                </div>
-              </div>
-              <div class="inline-panel">
-                <div class="panel-title required-label">지역</div>
-                <div class="region-toggle" id="regionToggle">
-                  <button class="toggle-btn" data-value="시흥" type="button">시흥</button>
-                  <button class="toggle-btn" data-value="부산" type="button">부산</button>
-                  <button class="toggle-btn" data-value="대구" type="button">대구</button>
-                  <button class="toggle-btn" data-value="대전" type="button">대전</button>
-                </div>
-              </div>
-            </div>
-            <div class="photos-grid" style="grid-template-columns: 1fr;">
-              <div class="photo-box" id="assetPhotoBox">
-                <img id="assetPhotoPreview" alt="자산 사진 미리보기" hidden />
-                <div id="assetPhotoEmpty" class="photo-empty"></div>
-                <div class="photo-overlay" aria-hidden="false">
-                  <input id="assetPhotoFile" type="file" accept="image/*" hidden />
-                  <button id="btnChooseAssetPhoto" class="btn-sm" type="button">사진 선택</button>
-                  <button id="btnClearAssetPhoto" class="btn-sm gray" type="button">삭제</button>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -1103,8 +1195,8 @@
     // 실제로는 실시간 리스너를 사용하지 않으므로 기능에 영향 없음
     // 브라우저 콘솔 오류는 무시해도 됨
     window.addEventListener('error', (event) => {
-      if (event.message && event.message.includes('access control checks') && 
-          event.message.includes('firestore.googleapis.com')) {
+      if (event.message && event.message.includes('access control checks') &&
+        event.message.includes('firestore.googleapis.com')) {
         event.preventDefault();
         console.debug('Firestore 내부 채널 CORS 오류 무시 (기능에 영향 없음)');
       }
@@ -1322,14 +1414,14 @@
         const timeout = setTimeout(() => {
           resolve(); // 타임아웃 시에도 진행
         }, 5000);
-        
+
         const handler = () => {
           clearTimeout(timeout);
           window.removeEventListener('auth-state-changed', handler);
           resolve();
         };
         window.addEventListener('auth-state-changed', handler);
-        
+
         // 이미 인증된 경우 즉시 해제
         if (window.currentUser) {
           clearTimeout(timeout);
@@ -1412,23 +1504,47 @@
         chk.type = 'checkbox';
         chk.addEventListener('change', updateDeleteButton);
         tdChk.appendChild(chk);
-        const tdNo = document.createElement('td'); tdNo.textContent = a.assetNo;
+        const tdNo = document.createElement('td');
+        tdNo.textContent = a.assetNo;
+        tdNo.className = 'col-asset-no';
+
         // 상태 표시
         const tdStatus = document.createElement('td');
-        tdStatus.className = 'status-cell';
+        tdStatus.className = 'status-cell col-status';
         const status = a.status || 'normal';
         const statusBadge = document.createElement('span');
         statusBadge.className = `status-badge status-${status}`;
         statusBadge.textContent = statusLabelMap[status] || status;
         tdStatus.appendChild(statusBadge);
-        const tdType = document.createElement('td'); tdType.textContent = a.assetType || '';
-        const tdMkc = document.createElement('td'); tdMkc.textContent = a.mkcCode;
-        const tdName = document.createElement('td'); tdName.textContent = a.name;
-        const tdSerial = document.createElement('td'); tdSerial.textContent = a.serialNo || '';
-        const tdCode = document.createElement('td'); tdCode.textContent = a.codeNo || '';
+
+        const tdType = document.createElement('td');
+        tdType.textContent = a.assetType || '';
+        tdType.className = 'col-category';
+
+        const tdMkc = document.createElement('td');
+        tdMkc.textContent = a.mkcCode;
+        tdMkc.className = 'col-mkc';
+
+        const tdName = document.createElement('td');
+        tdName.textContent = a.name;
+        tdName.className = 'col-name';
+
+        const tdSerial = document.createElement('td');
+        tdSerial.textContent = a.serialNo || '';
+        tdSerial.className = 'col-serial';
+
+        const tdCode = document.createElement('td');
+        tdCode.textContent = a.codeNo || '';
+        tdCode.className = 'col-code';
+
         const tdLoc = document.createElement('td');
         tdLoc.textContent = getLocationString(a);
-        const tdAcq = document.createElement('td'); tdAcq.textContent = a.acquiredDate || '';
+        tdLoc.className = 'col-location';
+
+        const tdAcq = document.createElement('td');
+        tdAcq.textContent = a.acquiredDate || '';
+        tdAcq.className = 'col-date';
+
         tr.append(tdChk, tdNo, tdStatus, tdType, tdMkc, tdName, tdSerial, tdCode, tdLoc, tdAcq);
         tr.addEventListener('click', (e) => {
           if (e.target instanceof HTMLInputElement) return; // 체크박스 클릭은 무시
@@ -1752,25 +1868,30 @@
     function setupBackToListButton() {
       const actions = document.querySelector('.topbar .actions');
       if (!actions) return;
-      
+
       // 로그아웃 버튼 찾기
       const logoutBtn = document.getElementById('btnLogout') || document.getElementById('btnToggleEdit');
       if (!logoutBtn) return; // 로그아웃 버튼이 없으면 대기
-      
+
       let btnBackToList = document.getElementById('btnBackToList');
       if (!btnBackToList) {
+        const ICON_LIST = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>`;
         btnBackToList = document.createElement('button');
         btnBackToList.id = 'btnBackToList';
         btnBackToList.type = 'button';
-        btnBackToList.textContent = '설비목록';
+        btnBackToList.innerHTML = `${ICON_LIST}<span class="btn-text">설비목록</span>`;
+        btnBackToList.setAttribute('aria-label', '설비목록');
         btnBackToList.style.background = '#4b5563';
         btnBackToList.style.color = '#fff';
         btnBackToList.style.border = '1px solid #4b5563';
-        btnBackToList.style.padding = '8px 16px';
+        // btnBackToList.style.padding = '8px 16px'; // Removed to let CSS handle responsive padding
         btnBackToList.style.borderRadius = '6px';
         btnBackToList.style.fontWeight = '600';
         btnBackToList.style.cursor = 'pointer';
         btnBackToList.style.transition = 'all 0.2s ease';
+        btnBackToList.style.display = 'inline-flex';
+        btnBackToList.style.alignItems = 'center';
+        btnBackToList.style.gap = '6px';
         btnBackToList.addEventListener('mouseenter', () => {
           btnBackToList.style.background = '#374151';
           btnBackToList.style.borderColor = '#374151';
@@ -1783,7 +1904,7 @@
           window.location.href = 'list.html';
         });
       }
-      
+
       // 버튼이 이미 있지만 로그아웃 버튼 다음이 아니면 재배치
       if (btnBackToList.parentElement !== actions || btnBackToList.previousElementSibling !== logoutBtn) {
         // 기존 위치에서 제거

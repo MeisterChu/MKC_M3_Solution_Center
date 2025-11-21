@@ -72,6 +72,11 @@ function updateTopbarForUser(user) {
     const actions = document.querySelector('.topbar .actions');
     if (!actions) return;
     
+    // Icons
+    const ICON_USER = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
+    const ICON_LOGOUT = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>`;
+    const ICON_LIST = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>`;
+
     // 버튼 순서: 이름 -> 로그아웃 -> 설비목록
     
     // 1. 사용자 이름 라벨 추가/업데이트 (가장 앞에)
@@ -79,12 +84,16 @@ function updateTopbarForUser(user) {
     if (!userLabel) {
       userLabel = document.createElement('span');
       userLabel.id = 'authUserLabel';
-      userLabel.style.marginRight = '20px';
+      userLabel.className = 'user-greeting'; // Class for mobile hiding
+      userLabel.style.marginRight = '12px';
       userLabel.style.fontSize = '14px';
       userLabel.style.fontWeight = '500';
       userLabel.style.color = '#4b5563';
       userLabel.style.letterSpacing = '0.01em';
       userLabel.style.fontFamily = '"Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      userLabel.style.display = 'inline-flex';
+      userLabel.style.alignItems = 'center';
+      userLabel.style.gap = '6px';
       // 이름 라벨을 가장 앞에 배치
       actions.insertBefore(userLabel, actions.firstChild);
     }
@@ -94,17 +103,17 @@ function updateTopbarForUser(user) {
     if (userEmail) {
       getUserNameByEmail(userEmail).then(name => {
         if (userLabel) {
-          const displayName = name && name !== userEmail ? `${name}님 로그인됨` : `${userEmail}`;
-          userLabel.textContent = displayName;
+          const displayName = name && name !== userEmail ? `${name}님` : `${userEmail}`;
+          userLabel.innerHTML = `${ICON_USER}<span>${displayName}</span>`;
         }
       }).catch(() => {
         // 오류 시 email로 표시
         if (userLabel) {
-          userLabel.textContent = `${userEmail}`;
+          userLabel.innerHTML = `${ICON_USER}<span>${userEmail}</span>`;
         }
       });
     } else {
-      userLabel.textContent = user?.displayName || '';
+      userLabel.innerHTML = `${ICON_USER}<span>${user?.displayName || ''}</span>`;
     }
 
     // 2. 로그아웃 버튼 처리 (이메일 다음에)
@@ -112,12 +121,18 @@ function updateTopbarForUser(user) {
     let logoutBtn = null;
     
     if (toggleBtn) {
-      toggleBtn.textContent = '로그아웃';
+      // Preserve existing classes/styles but update content
+      toggleBtn.innerHTML = `${ICON_LOGOUT}<span class="btn-text">로그아웃</span>`;
+      toggleBtn.setAttribute('aria-label', '로그아웃');
       toggleBtn.onclick = async () => { try { await signOut(auth); } catch(_) {} };
       // 로그아웃 버튼 스타일: 흰색 배경 + 검정 폰트
       toggleBtn.style.background = '#ffffff';
       toggleBtn.style.color = '#000000';
       toggleBtn.style.border = '1px solid #e5e7eb';
+      toggleBtn.style.display = 'inline-flex';
+      toggleBtn.style.alignItems = 'center';
+      toggleBtn.style.gap = '6px';
+      
       // 버튼 순서 조정: 이메일 다음에 배치
       if (userLabel.nextSibling !== toggleBtn) {
         toggleBtn.remove();
@@ -131,11 +146,16 @@ function updateTopbarForUser(user) {
         btn = document.createElement('button');
         btn.id = 'btnLogout';
         btn.type = 'button';
-        btn.textContent = '로그아웃';
+        btn.innerHTML = `${ICON_LOGOUT}<span class="btn-text">로그아웃</span>`;
+        btn.setAttribute('aria-label', '로그아웃');
         // 로그아웃 버튼 스타일: 흰색 배경 + 검정 폰트
+        btn.className = 'btn'; // Add basic btn class if available
         btn.style.background = '#ffffff';
         btn.style.color = '#000000';
         btn.style.border = '1px solid #e5e7eb';
+        btn.style.display = 'inline-flex';
+        btn.style.alignItems = 'center';
+        btn.style.gap = '6px';
         btn.addEventListener('click', async () => { try { await signOut(auth); } catch (_) {} });
         // 이메일 다음에 배치
         userLabel.insertAdjacentElement('afterend', btn);
@@ -145,8 +165,18 @@ function updateTopbarForUser(user) {
     
     // 3. 설비목록 버튼을 로그아웃 다음에 배치
     const btnList = document.getElementById('btnList');
-    if (btnList && logoutBtn) {
-      if (logoutBtn.nextSibling !== btnList) {
+    if (btnList) {
+      // Update content to include icon
+      if (!btnList.querySelector('svg')) {
+         const originalText = btnList.textContent;
+         btnList.innerHTML = `${ICON_LIST}<span class="btn-text">${originalText}</span>`;
+         btnList.setAttribute('aria-label', originalText);
+         btnList.style.display = 'inline-flex';
+         btnList.style.alignItems = 'center';
+         btnList.style.gap = '6px';
+      }
+
+      if (logoutBtn && logoutBtn.nextSibling !== btnList) {
         btnList.remove();
         logoutBtn.insertAdjacentElement('afterend', btnList);
       }

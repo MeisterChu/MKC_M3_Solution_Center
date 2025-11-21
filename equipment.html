@@ -1,38 +1,192 @@
 <!doctype html>
 <html lang="ko">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>M3SC 설비관리대장</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./assets/styles.css" />
-    <script type="module" src="./assets/auth-guard.js"></script>
-  </head>
-  <body class="read-mode">
-    <header class="topbar" role="banner">
-      <div class="brand"><span class="brand-highlight" aria-label="M3 Solution Center 라벨">M3 Solution Center</span></div>
-      <div class="actions" role="toolbar" aria-label="상단 도구 모음">
-        <button id="btnList" type="button">설비목록</button>
-        <button id="btnToggleEdit" type="button" aria-pressed="false">로그인</button>
-      </div>
-    </header>
-    <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
-    <main class="main-with-tabs" role="main">
-      <aside class="tabs-sidebar" role="navigation" aria-label="탭 메뉴">
-        <div class="tabs-list">
-          <button class="tab-button active" data-tab="overview" type="button">대시보드</button>
-          <button class="tab-button" data-tab="specs" type="button">설비정보</button>
-          <button class="tab-button" data-tab="history" type="button">설비이력</button>
-          
-          <button class="tab-button" data-tab="tasks" type="button">정기점검</button>
-          <button class="tab-button" data-tab="linked-assets" type="button">연결자산</button>
-          <button class="tab-button" data-tab="photo" type="button">설비사진</button>
-        </div>
-      </aside>
-      <div class="tabs-content">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>M3SC 설비관리대장</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+  <link rel="stylesheet" href="./assets/styles.css" />
+  <script type="module" src="./assets/auth-guard.js"></script>
+  <style>
+    /* Mobile Optimizations */
+    @media (max-width: 768px) {
+      .main-with-tabs {
+        flex-direction: column;
+      }
+
+      .tabs-sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #e0e0e0;
+        overflow-x: auto;
+        background: #fff;
+        position: sticky;
+        top: 60px;
+        /* Below topbar */
+        z-index: 10;
+        padding: 0;
+        /* Remove padding to fit full width */
+      }
+
+      .tabs-sidebar .tabs-list {
+        flex-direction: row;
+        padding: 0;
+        gap: 0;
+        /* Remove gap, use justify-content or flex-grow */
+        width: 100%;
+        display: flex;
+      }
+
+      .tabs-sidebar .tab-button {
+        flex: 1;
+        /* Distribute width equally */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 4px;
+        border-radius: 0;
+        background: transparent !important;
+        border-bottom: 2px solid transparent;
+        color: #666;
+        font-size: 11px;
+        /* Smaller text for mobile */
+        gap: 4px;
+        min-width: 60px;
+        /* Minimum width for touch target */
+        white-space: nowrap;
+      }
+
+      .tab-button .material-symbols-outlined {
+        font-size: 24px;
+      }
+
+      .tab-button.active {
+        color: #0d6efd;
+        border-bottom-color: #0d6efd;
+        font-weight: 700;
+      }
+
+      .tab-button.active .material-symbols-outlined {
+        font-variation-settings: 'FILL' 1;
+      }
+
+      .tab-button:hover {
+        background: transparent !important;
+        color: #333;
+      }
+
+      .tabs-content {
+        padding: 16px;
+      }
+
+      /* Dashboard Panels */
+      .overview-top-row {
+        flex-direction: column;
+      }
+
+      .dashboard-panels-row {
+        flex-direction: column;
+      }
+
+      .panel-image,
+      .panel-summary,
+      .panel-status {
+        width: 100%;
+        min-width: 0;
+      }
+
+      /* Tables */
+      .table-wrap {
+        overflow-x: auto;
+      }
+
+      table {
+        min-width: 500px;
+        /* Ensure table doesn't squash */
+      }
+
+      /* Specs Form */
+      .specs-required {
+        grid-template-columns: 1fr;
+      }
+
+      .specs-required label.full {
+        grid-column: auto;
+      }
+
+      .location-inputs {
+        flex-direction: column;
+      }
+
+      .location-inputs input,
+      .location-inputs select {
+        width: 100%;
+      }
+    }
+
+    /* Desktop Icon Styles (Optional: make them look good on desktop too) */
+    @media (min-width: 769px) {
+      .tab-button {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .tab-button .material-symbols-outlined {
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body class="read-mode">
+  <header class="topbar" role="banner">
+    <div class="brand"><span class="brand-highlight" aria-label="M3 Solution Center 라벨">M3 Solution Center</span></div>
+    <div class="actions" role="toolbar" aria-label="상단 도구 모음">
+      <button id="btnList" type="button">설비목록</button>
+      <button id="btnToggleEdit" type="button" aria-pressed="false">로그인</button>
+    </div>
+  </header>
+  <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <main class="main-with-tabs" role="main">
+    <aside class="tabs-sidebar" role="navigation" aria-label="탭 메뉴">
+      <div class="tabs-list">
+        <button class="tab-button active" data-tab="overview" type="button">
+          <span class="material-symbols-outlined">dashboard</span>
+          <span>대시보드</span>
+        </button>
+        <button class="tab-button" data-tab="specs" type="button">
+          <span class="material-symbols-outlined">description</span>
+          <span>설비정보</span>
+        </button>
+        <button class="tab-button" data-tab="history" type="button">
+          <span class="material-symbols-outlined">history</span>
+          <span>설비이력</span>
+        </button>
+
+        <button class="tab-button" data-tab="tasks" type="button">
+          <span class="material-symbols-outlined">build</span>
+          <span>정기점검</span>
+        </button>
+        <button class="tab-button" data-tab="linked-assets" type="button">
+          <span class="material-symbols-outlined">link</span>
+          <span>연결자산</span>
+        </button>
+        <button class="tab-button" data-tab="photo" type="button">
+          <span class="material-symbols-outlined">image</span>
+          <span>설비사진</span>
+        </button>
+      </div>
+    </aside>
+    <div class="tabs-content">
       <div class="overview-top-row" data-tab="overview" aria-label="요약 및 상태 패널">
         <section class="panel panel-image" data-tab="overview" aria-labelledby="image-title">
           <h2 id="image-title">IMAGE</h2>
@@ -140,7 +294,8 @@
       <!-- 설비이력 전용 탭 (패널 없이 표만 표시) -->
       <section class="history-page" data-tab="history" aria-labelledby="hist2-title">
         <h2 id="hist2-title" style="position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden;">설비이력</h2>
-        <div class="history-controls" style="display:flex; gap:8px; align-items:flex-start; flex-wrap:wrap; margin-bottom:8px;">
+        <div class="history-controls"
+          style="display:flex; gap:8px; align-items:flex-start; flex-wrap:wrap; margin-bottom:8px;">
           <div>
             <div class="filter-type-panels" role="group" aria-label="유형 필터">
               <div class="type-panel">
@@ -195,86 +350,86 @@
 
       <section class="specs-page" data-tab="specs" aria-labelledby="specs-title">
         <h2 id="specs-title">설비사양</h2>
-          <div class="specs-required">
-            <label class="required">Model
-              <input id="reqModel" type="text" aria-describedby="errModel" required />
-              <span id="reqModelView" class="field-view"></span>
-              <small id="errModel" class="error-text" aria-live="polite"></small>
-            </label>
-            <label class="required">Serial No.
-              <input id="reqSerial" type="text" aria-describedby="errSerial" required />
-              <span id="reqSerialView" class="field-view"></span>
-              <small id="errSerial" class="error-text" aria-live="polite"></small>
-            </label>
-            <label class="required">Code No.
-              <input id="reqCode" type="text" aria-describedby="errCode" required />
-              <span id="reqCodeView" class="field-view"></span>
-              <small id="errCode" class="error-text" aria-live="polite"></small>
-            </label>
-            <label class="required">구분
-              <select id="reqCategory" required>
+        <div class="specs-required">
+          <label class="required">Model
+            <input id="reqModel" type="text" aria-describedby="errModel" required />
+            <span id="reqModelView" class="field-view"></span>
+            <small id="errModel" class="error-text" aria-live="polite"></small>
+          </label>
+          <label class="required">Serial No.
+            <input id="reqSerial" type="text" aria-describedby="errSerial" required />
+            <span id="reqSerialView" class="field-view"></span>
+            <small id="errSerial" class="error-text" aria-live="polite"></small>
+          </label>
+          <label class="required">Code No.
+            <input id="reqCode" type="text" aria-describedby="errCode" required />
+            <span id="reqCodeView" class="field-view"></span>
+            <small id="errCode" class="error-text" aria-live="polite"></small>
+          </label>
+          <label class="required">구분
+            <select id="reqCategory" required>
+              <option value="">선택</option>
+              <option value="CMM">CMM</option>
+              <option value="VMM">VMM</option>
+              <option value="FORM">FORM</option>
+              <option value="OTHERS">OTHERS</option>
+            </select>
+            <span id="reqCategoryView" class="field-view"></span>
+            <small id="errCategory" class="error-text" aria-live="polite"></small>
+          </label>
+          <label class="required">최초설치일
+            <input id="reqInstallDate" type="date" aria-describedby="errInstall" required />
+            <span id="reqInstallDateView" class="field-view"></span>
+            <small id="errInstall" class="error-text" aria-live="polite"></small>
+          </label>
+          <label class="required">마지막 정도검사
+            <input id="reqCalibrationDate" type="date" aria-describedby="errCalib" required />
+            <span id="reqCalibrationDateView" class="field-view"></span>
+            <small id="errCalib" class="error-text" aria-live="polite"></small>
+          </label>
+          <label class="required">위치 (대분류/중분류/소분류)
+            <div class="location-inputs">
+              <select id="reqLocationMajor" required>
                 <option value="">선택</option>
-                <option value="CMM">CMM</option>
-                <option value="VMM">VMM</option>
-                <option value="FORM">FORM</option>
-                <option value="OTHERS">OTHERS</option>
+                <option value="시흥">시흥</option>
+                <option value="부산">부산</option>
+                <option value="대구">대구</option>
+                <option value="대전">대전</option>
               </select>
-              <span id="reqCategoryView" class="field-view"></span>
-              <small id="errCategory" class="error-text" aria-live="polite"></small>
-            </label>
-            <label class="required">최초설치일
-              <input id="reqInstallDate" type="date" aria-describedby="errInstall" required />
-              <span id="reqInstallDateView" class="field-view"></span>
-              <small id="errInstall" class="error-text" aria-live="polite"></small>
-            </label>
-            <label class="required">마지막 정도검사
-              <input id="reqCalibrationDate" type="date" aria-describedby="errCalib" required />
-              <span id="reqCalibrationDateView" class="field-view"></span>
-              <small id="errCalib" class="error-text" aria-live="polite"></small>
-            </label>
-            <label class="required">위치 (대분류/중분류/소분류)
-              <div class="location-inputs">
-                <select id="reqLocationMajor" required>
-                  <option value="">선택</option>
-                  <option value="시흥">시흥</option>
-                  <option value="부산">부산</option>
-                  <option value="대구">대구</option>
-                  <option value="대전">대전</option>
-                </select>
-                <input id="reqLocationMiddle" type="text" placeholder="중분류 (선택사항)" />
-                <input id="reqLocationMinor" type="text" placeholder="소분류 (선택사항)" />
-              </div>
-              <div class="location-views">
-                <span id="reqLocationMajorView" class="field-view"></span>
-                <span id="reqLocationMiddleView" class="field-view"></span>
-                <span id="reqLocationMinorView" class="field-view"></span>
-              </div>
-              <small id="errLocation" class="error-text" aria-live="polite"></small>
-            </label>
-            <label class="full">비고
-              <input id="reqNote" type="text" />
-              <span id="reqNoteView" class="field-view"></span>
-            </label>
-          </div>
-          <hr />
-          <div class="table-wrap" aria-label="사양 테이블">
-            <table>
-              <thead>
-                <tr>
-                  <th scope="col">키</th>
-                  <th scope="col">값</th>
-                  <th scope="col">동작</th>
-                </tr>
-              </thead>
-              <tbody id="specsBody"></tbody>
-            </table>
-          </div>
-          <div style="margin-top:8px">
-            <button id="btnAddSpec" class="btn-sm" type="button">사양 행 추가</button>
-          </div>
+              <input id="reqLocationMiddle" type="text" placeholder="중분류 (선택사항)" />
+              <input id="reqLocationMinor" type="text" placeholder="소분류 (선택사항)" />
+            </div>
+            <div class="location-views">
+              <span id="reqLocationMajorView" class="field-view"></span>
+              <span id="reqLocationMiddleView" class="field-view"></span>
+              <span id="reqLocationMinorView" class="field-view"></span>
+            </div>
+            <small id="errLocation" class="error-text" aria-live="polite"></small>
+          </label>
+          <label class="full">비고
+            <input id="reqNote" type="text" />
+            <span id="reqNoteView" class="field-view"></span>
+          </label>
+        </div>
+        <hr />
+        <div class="table-wrap" aria-label="사양 테이블">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">키</th>
+                <th scope="col">값</th>
+                <th scope="col">동작</th>
+              </tr>
+            </thead>
+            <tbody id="specsBody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:8px">
+          <button id="btnAddSpec" class="btn-sm" type="button">사양 행 추가</button>
+        </div>
       </section>
 
-      
+
 
       <section class="tasks-page" data-tab="tasks" aria-labelledby="tasks-title">
         <h2 id="tasks-title">정기점검</h2>
@@ -307,73 +462,81 @@
           <table>
             <thead>
               <tr>
-                <th scope="col" data-sort-key="assetType"><button type="button" class="table-sort-button" data-sort-key="assetType">자산분류</button></th>
-                <th scope="col" data-sort-key="assetNo"><button type="button" class="table-sort-button" data-sort-key="assetNo">자산번호</button></th>
-                <th scope="col" data-sort-key="assetCode"><button type="button" class="table-sort-button" data-sort-key="assetCode">자산코드</button></th>
-                <th scope="col" data-sort-key="name"><button type="button" class="table-sort-button" data-sort-key="name">자산명</button></th>
-                <th scope="col" data-sort-key="status"><button type="button" class="table-sort-button" data-sort-key="status">상태</button></th>
-                <th scope="col" data-sort-key="location"><button type="button" class="table-sort-button" data-sort-key="location">위치</button></th>
+                <th scope="col" data-sort-key="assetType"><button type="button" class="table-sort-button"
+                    data-sort-key="assetType">자산분류</button></th>
+                <th scope="col" data-sort-key="assetNo"><button type="button" class="table-sort-button"
+                    data-sort-key="assetNo">자산번호</button></th>
+                <th scope="col" data-sort-key="assetCode"><button type="button" class="table-sort-button"
+                    data-sort-key="assetCode">자산코드</button></th>
+                <th scope="col" data-sort-key="name"><button type="button" class="table-sort-button"
+                    data-sort-key="name">자산명</button></th>
+                <th scope="col" data-sort-key="status"><button type="button" class="table-sort-button"
+                    data-sort-key="status">상태</button></th>
+                <th scope="col" data-sort-key="location"><button type="button" class="table-sort-button"
+                    data-sort-key="location">위치</button></th>
               </tr>
             </thead>
             <tbody id="linkedAssetsBody"></tbody>
           </table>
         </div>
       </section>
-      </div>
-    </main>
-    <!-- 저장 진행 모달 -->
-    <div id="progressModal" class="modal" aria-hidden="true">
-      <div class="modal-backdrop"></div>
-      <div class="modal-content progress" role="dialog" aria-modal="true" aria-label="저장 진행 상황">
-        <div class="progress-wrap" aria-live="polite">
-          <div id="progressIcon" class="progress-icon" aria-hidden="true">✓</div>
-          <div id="progressMessage" class="progress-message">저장 중…</div>
-          <div class="progress-bar" role="progressbar" aria-busy="true" aria-valuemin="0" aria-valuemax="100" aria-label="저장 진행">
-            <div id="progressBar" class="progress-bar-fill"></div>
-          </div>
+    </div>
+  </main>
+  <!-- 저장 진행 모달 -->
+  <div id="progressModal" class="modal" aria-hidden="true">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content progress" role="dialog" aria-modal="true" aria-label="저장 진행 상황">
+      <div class="progress-wrap" aria-live="polite">
+        <div id="progressIcon" class="progress-icon" aria-hidden="true">✓</div>
+        <div id="progressMessage" class="progress-message">저장 중…</div>
+        <div class="progress-bar" role="progressbar" aria-busy="true" aria-valuemin="0" aria-valuemax="100"
+          aria-label="저장 진행">
+          <div id="progressBar" class="progress-bar-fill"></div>
         </div>
       </div>
     </div>
-    <!-- 사진 확대 모달 -->
-    <div id="photoModal" class="modal" aria-hidden="true">
-      <div class="modal-backdrop" data-close="1"></div>
-      <div class="modal-content" role="dialog" aria-modal="true" aria-label="사진 확대보기">
-        <img id="modalImage" alt="확대 이미지" />
-        <div id="modalCaption" class="modal-caption" aria-live="polite">
-          <div id="modalCapDesc" class="cap-desc"></div>
-          <div id="modalCapSub" class="cap-sub"></div>
-        </div>
-        <button id="modalClose" class="btn-sm" type="button">닫기</button>
+  </div>
+  <!-- 사진 확대 모달 -->
+  <div id="photoModal" class="modal" aria-hidden="true">
+    <div class="modal-backdrop" data-close="1"></div>
+    <div class="modal-content" role="dialog" aria-modal="true" aria-label="사진 확대보기">
+      <img id="modalImage" alt="확대 이미지" />
+      <div id="modalCaption" class="modal-caption" aria-live="polite">
+        <div id="modalCapDesc" class="cap-desc"></div>
+        <div id="modalCapSub" class="cap-sub"></div>
       </div>
+      <button id="modalClose" class="btn-sm" type="button">닫기</button>
     </div>
+  </div>
 
-    
 
-    <!-- Firebase SDK -->
-    <script type="module">
-      import { getFirebaseApp } from './assets/firebase-config.js';
-      import { getFirestore, collection, getDocs, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-lite.js';
-      
-      // Firebase 초기화
-      const app = getFirebaseApp();
-      const db = getFirestore(app);
-      
-      // CORS 오류 처리: Firestore SDK가 내부적으로 실시간 채널을 시도하지만,
-      // 실제로는 실시간 리스너를 사용하지 않으므로 기능에 영향 없음
-      // 브라우저 콘솔 오류는 무시해도 됨
-      window.addEventListener('error', (event) => {
-        if (event.message && event.message.includes('access control checks') && 
-            event.message.includes('firestore.googleapis.com')) {
-          event.preventDefault();
-          console.debug('Firestore 내부 채널 CORS 오류 무시 (기능에 영향 없음)');
-        }
-      }, true);
-      
-      // 전역 변수로 설정 (app.js에서 사용)
-      window.firebaseDb = db;
-      // Firestore Lite 헬퍼 노출 (비모듈 스크립트에서 사용)
-      window.firebaseLite = { collection, getDocs, doc, setDoc };
-    </script>
-    <script src="./assets/app.js"></script>
-  </body>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { getFirebaseApp } from './assets/firebase-config.js';
+    import { getFirestore, collection, getDocs, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-lite.js';
+
+    // Firebase 초기화
+    const app = getFirebaseApp();
+    const db = getFirestore(app);
+
+    // CORS 오류 처리: Firestore SDK가 내부적으로 실시간 채널을 시도하지만,
+    // 실제로는 실시간 리스너를 사용하지 않으므로 기능에 영향 없음
+    // 브라우저 콘솔 오류는 무시해도 됨
+    window.addEventListener('error', (event) => {
+      if (event.message && event.message.includes('access control checks') &&
+        event.message.includes('firestore.googleapis.com')) {
+        event.preventDefault();
+        console.debug('Firestore 내부 채널 CORS 오류 무시 (기능에 영향 없음)');
+      }
+    }, true);
+
+    // 전역 변수로 설정 (app.js에서 사용)
+    window.firebaseDb = db;
+    // Firestore Lite 헬퍼 노출 (비모듈 스크립트에서 사용)
+    window.firebaseLite = { collection, getDocs, doc, setDoc };
+  </script>
+  <script src="./assets/app.js"></script>
+</body>
+
 </html>
