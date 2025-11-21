@@ -31,11 +31,8 @@
   let usersAccessAllowed = true;
   
   // 비밀번호 매핑
-  const passwordMap = {
-    '1211': '추호범',
-    '1424': '임경윤',
-    '2312': '전재민'
-  };
+  // Password map removed for security - Firebase Authentication is used instead
+  const passwordMap = {};
 
   const els = {};
   const $ = (sel) => document.querySelector(sel);
