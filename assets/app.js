@@ -1729,7 +1729,7 @@
           return;
         }
         const redirect = encodeURIComponent(location.pathname + location.search);
-        window.location.href = `login.html?redirect=${redirect}`;
+        window.location.href = `index.html?redirect=${redirect}`;
       });
     }
 

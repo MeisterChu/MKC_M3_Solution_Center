@@ -169,8 +169,8 @@ onAuthStateChanged(auth, (user) => {
   if (!user) {
     const redirectTo = encodeURIComponent(location.pathname + location.search);
     // Avoid redirect loops if already on login
-    if (!/login\.html$/i.test(location.pathname)) {
-      location.replace(`login.html?redirect=${redirectTo}`);
+    if (!/index\.html$/i.test(location.pathname)) {
+      location.replace(`index.html?redirect=${redirectTo}`);
     }
     return;
   }

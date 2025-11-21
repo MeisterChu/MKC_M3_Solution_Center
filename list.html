@@ -1124,10 +1124,10 @@
 
       // 설비 열기
       function openEquipment(id) {
-        // index.html을 현재 페이지에서 열고 선택된 설비 ID 전달
+        // equipment.html을 현재 페이지에서 열고 선택된 설비 ID 전달
         // id가 없으면 문서 ID 사용
         const equipmentId = id || '';
-        const url = `index.html?id=${encodeURIComponent(equipmentId)}`;
+        const url = `equipment.html?id=${encodeURIComponent(equipmentId)}`;
         window.location.href = url;
       }
 
@@ -1598,8 +1598,8 @@
             updatedAt: new Date().toISOString()
           });
 
-          // index.html로 이동 (새 설비 ID 전달)
-          window.location.href = `index.html?id=${encodeURIComponent(newEq.id)}`;
+          // equipment.html로 이동 (새 설비 ID 전달)
+          window.location.href = `equipment.html?id=${encodeURIComponent(newEq.id)}`;
         } catch (err) {
           console.error('설비 등록 실패:', err);
           error.textContent = '설비 등록 중 오류가 발생했습니다: ' + err.message;

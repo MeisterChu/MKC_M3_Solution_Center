@@ -11,6 +11,10 @@ Backup/
 *.tmp
 *.temp
 
+# 마크다운 문서 (로컬 참고용)
+*.md
+*.txt
+
 # 에디터 설정 파일 (선택사항)
 .vscode/
 .idea/
